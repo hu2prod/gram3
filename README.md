@@ -9,6 +9,9 @@ Next breaking change over gram2
   * No gram1 dependency
   * (need check) even more performance with new algo (GLR-like)
 
+# Breaking changes
+  * `rule('*')` `rule('+')` is now not valid. Use `rule('\\*')` `rule('\\+')`
+
 # WIP
   * token sequence quality of life
     * quantificators + ? *
