@@ -10,7 +10,7 @@ Next breaking change over gram2
   * (need check) even more performance with new algo (GLR-like)
 
 # Breaking changes
-  * `rule('*')` `rule('+')` is now not valid. Use `rule('\\*')` `rule('\\+')`
+  * `rule('r', '*')` `rule('r', '+')` is now not valid. Use `rule('r', '\\*')` `rule('r', '\\+')`
 
 # WIP
   * token sequence quality of life
