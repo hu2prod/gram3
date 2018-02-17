@@ -1,0 +1,11 @@
+tokenizer = new Tokenizer
+tokenizer.parser_list.push (new Token_parser 'hash_id', /^\#[_a-z0-9]+/i )
+tokenizer.parser_list.push (new Token_parser 'option',  /^\?/ )
+tokenizer.parser_list.push (new Token_parser 'plus',    /^\+/ )
+tokenizer.parser_list.push (new Token_parser 'star',    /^\*/ )
+tokenizer.parser_list.push (new Token_parser 'bra_op',  /^\(/ )
+tokenizer.parser_list.push (new Token_parser 'bra_cl',  /^\)/ )
+tokenizer.parser_list.push (new Token_parser 'or',      /^\|/ )
+tokenizer.parser_list.push (new Token_parser 'q_token', /^\'[^']*\'/ )
+tokenizer.parser_list.push (new Token_parser 'token',   /^[_a-z0-9]+/ )
+tokenizer.parser_list.push (new Token_parser 'escape_token', /^\\\S/ )
