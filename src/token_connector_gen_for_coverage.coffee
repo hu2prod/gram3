@@ -19,7 +19,6 @@ tokenizer.parser_list.push (new Token_parser 'q_token', /^\'[^']*\'/ )
 tokenizer.parser_list.push (new Token_parser 'token',   /^[_a-z0-9]+/ )
 tokenizer.parser_list.push (new Token_parser 'escape_token', /^\\\S/ )
 
-
 # ###################################################################################################
 #    gram
 # ###################################################################################################

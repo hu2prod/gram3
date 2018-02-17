@@ -166,7 +166,7 @@ class @Gram_scope
       hk_call_hash[rule.ret_hash_key] ?= []
       continue if !rule._first_token_hash_key
       hk_call_hash[rule.ret_hash_key].upush rule._first_token_hash_key
-    # p hk_call_hash
+    
     # замыкание
     found = true
     while found
@@ -187,13 +187,9 @@ class @Gram_scope
       rule.can_recursive = possible_call_list.has rule.ret_hash_key
       if rule.can_recursive
         recursive_token_hash[rule.ret_hash_key] = true
-      # if rule.can_recursive
-        # p "can_recursive=#{rule.origin_tc}"
     
     for rule in @initial_rule_list
       rule.can_only_new_call = recursive_token_hash[rule.ret_hash_key]?
-      # if rule.can_only_new_call
-        # p "can_only_new_call=#{rule.origin_tc}"
     
     # group rules
     @group_rule_list = []
