@@ -146,6 +146,8 @@ class @Gram_scope
   
   compile : (opt={})->
     opt.gram_module ?= 'gram3'
+    if opt.expected_token # old API
+      @expected_token = opt.expected_token
     # prepare
     # _hash_key_list_init
     @hash_key_list.clear()

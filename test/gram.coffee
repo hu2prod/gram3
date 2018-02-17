@@ -68,6 +68,38 @@ describe 'gram section', ()->
     assert.equal res_list[0].value_array[0].value, 'hello'
     
     return
+  
+  it "simple pass runs expected_token", ()->
+    gs = new Gram_scope
+    gs.rule 't', 'hello'
+    code = gs.compile
+      gram_module : '../src/index'
+      expected_token : 't'
+    
+    compiled = _iced.compile code
+    
+    code = """
+      __ret = {};
+      fn = function() {
+      #{compiled}
+      };
+      fn.call(__ret);
+      __ret
+      """
+    
+    mod = eval code
+    prsr = new mod.Parser
+    tok_list = t.go 'hello'
+    
+    res_list = prsr.go tok_list
+    
+    assert.equal res_list.length, 1
+    assert.equal res_list[0].mx_hash.hash_key, 't'
+    assert.equal res_list[0].value_array.length, 1
+    assert.equal res_list[0].value_array[0].mx_hash.hash_key, 'id'
+    assert.equal res_list[0].value_array[0].value, 'hello'
+    
+    return
   # ###################################################################################################
   #    for heavier tests
   # ###################################################################################################
