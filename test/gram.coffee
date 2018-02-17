@@ -1,6 +1,5 @@
 assert = require 'assert'
 util = require 'fy/test_util'
-fs = require 'fs'
 
 {
   Gram_scope
@@ -47,7 +46,6 @@ describe 'gram section', ()->
     
     compiled = _iced.compile code
     
-    # no fs.writeFileSync + require
     code = """
       __ret = {};
       fn = function() {
@@ -78,11 +76,9 @@ describe 'gram section', ()->
     cb gs
     code = gs.compile
       gram_module : '../src/index'
-    fs.writeFileSync 'dump', code
     
     compiled = _iced.compile code
     
-    # no fs.writeFileSync + require
     code = """
       __ret = {};
       fn = function() {
