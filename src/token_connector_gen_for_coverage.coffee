@@ -24,7 +24,7 @@ tokenizer.parser_list.push (new Token_parser 'escape_token', /^\\\S/ )
 # ###################################################################################################
 
 require 'fy'
-{Node} = require "./index"
+{Node} = require "./node"
 class Hypothesis
   a : 0
   b : 0

@@ -54,7 +54,7 @@ tokenizer.parser_list.push (new Token_parser 'number', /^[0-9]+/)
 # ###################################################################################################
 
 require 'fy'
-{Node} = require "./index"
+{Node} = require "./node"
 class Hypothesis
   a : 0
   b : 0
