@@ -45,15 +45,13 @@ trans.translator_hash['const']   = translate:(ctx, node)->
   hyp_list = []
   for hyp_base in prev_hyp_list
     loop
-      break if hyp_base.b >= @cache.length
-      token_list = @cache[hyp_base.b][0]
+      b = hyp_base.last()?.b ? start_pos
+      break if b >= @cache.length
+      token_list = @cache[b][0]
       for token in token_list
         break if token.value != #{value}
         hyp = hyp_base.clone()
-        hyp.push {
-          token
-          label : #{JSON.stringify label}
-        }
+        hyp.push token
         hyp_list.push hyp
       break
   
@@ -69,10 +67,7 @@ wrap_collide = (loc_res, ctx)->
         if only_new
           continue if !append_me._is_new
         hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
+        hyp_add.push append_me
         hyp_list.push hyp_add
     
     """
@@ -83,10 +78,7 @@ wrap_collide = (loc_res, ctx)->
     for hyp in prev_hyp_list
       for append_me in #{loc_res}
         hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
+        hyp_add.push append_me
         hyp_list.push hyp_add
     
     """
@@ -95,7 +87,7 @@ trans.translator_hash['ref']   = translate:(ctx, node)->
   value = node.value_array[0].value
   name = value.substr(1)
   label = node.mx_hash.label
-  wrap_collide "@token_#{name} hyp.b", ctx
+  wrap_collide "@token_#{name}(hyp.last()?.b ? start_pos)", ctx
 
 wrap_inner = (inner, variation)->
   aux_option = ""
@@ -119,15 +111,13 @@ wrap_inner = (inner, variation)->
     for hyp in hyp_list
       node = new Node
       node.mx_hash.group = loc_group_idx
-      for obj in hyp.list
-        node.value_array.push obj.token
+      for obj in hyp
+        node.value_array.push obj
       
       node.a = node.value_array[0].a
       node.b = node.value_array.last().b
       
       wrap_hyp = zero_hyp.clone()
-      wrap_hyp.a = node.a
-      wrap_hyp.b = node.b
       wrap_hyp.list = [{
         token : node
         label : 'group_'+loc_group_idx
