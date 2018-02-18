@@ -46,7 +46,9 @@ strict_parser = require './strict_parser'
         #{rule_fn_name} : (start_pos, only_new = false)->
           group_idx = 1
           
-          zero_hyp = []
+          zero_hyp = new Hypothesis
+          zero_hyp.a = start_pos
+          zero_hyp.b = start_pos
           hyp_list = [zero_hyp.clone()]
           
           #{make_tab rule_code, '  '}
@@ -56,10 +58,10 @@ strict_parser = require './strict_parser'
             node = new Node
             node.mx_hash.rule = #{JSON.stringify rule_fn_name}
             vv_list = []
-            for obj in hyp
+            for obj in hyp.list
               # TODO obj.label -> hash_pos_idx
-              node.value_array.push obj
-              vv_list.push obj.value_view or obj.value
+              node.value_array.push obj.token
+              vv_list.push obj.token.value_view or obj.token.value
             node.value_view = vv_list.join ' '
             
             arg_list = node.value_array
@@ -128,7 +130,29 @@ strict_parser = require './strict_parser'
   """
   require 'fy'
   {Node} = require #{JSON.stringify opt.gram_module}
-  
+  class Hypothesis
+    a : 0
+    b : 0
+    list : []
+    _is_new : false
+    constructor : ()->
+      @list = []
+    
+    clone : ()->
+      ret = new Hypothesis
+      ret.a = @a
+      ret.b = @b
+      ret.list = @list.clone()
+      ret._is_new = @_is_new
+      ret
+    
+    push   : (proxy_node)->
+      @list.push proxy_node
+      @b = proxy_node.token.b
+      if @list.length == 1
+        @_is_new = proxy_node.token._is_new
+      return
+    
   drop_stub = []
   for i in [0 ... #{scope.hash_key_list.length}]
     drop_stub.push -1
