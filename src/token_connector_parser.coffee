@@ -39,23 +39,25 @@ trans.translator_hash['const']   = translate:(ctx, node)->
       """
   
   label = node.mx_hash.label
+  
   """
   #{aux_drop}
   prev_hyp_list = hyp_list
   hyp_list = []
-  for hyp_base in prev_hyp_list
+  for hyp in prev_hyp_list
     loop
-      break if hyp_base.b >= @cache.length
-      token_list = @cache[hyp_base.b][0]
+      break if hyp.b >= @cache.length
+      token_list = @cache[hyp.b][0]
       for token in token_list
         break if token.value != #{value}
-        hyp = hyp_base.clone()
-        hyp.push {
+        hyp_add = hyp.clone()
+        hyp_add.push {
           token
           label : #{JSON.stringify label}
         }
-        hyp_list.push hyp
+        hyp_list.push hyp_add
       break
+    #{if ctx.no_trash then '' else 'hyp.delete()'}
   
   """
 wrap_collide = (loc_res, ctx)->
@@ -74,6 +76,7 @@ wrap_collide = (loc_res, ctx)->
           label : 'TODO_tok_pos'
         }
         hyp_list.push hyp_add
+      #{if ctx.no_trash then '' else 'hyp.delete()'}
     
     """
   else
@@ -88,6 +91,7 @@ wrap_collide = (loc_res, ctx)->
           label : 'TODO_tok_pos'
         }
         hyp_list.push hyp_add
+      #{if ctx.no_trash then '' else 'hyp.delete()'}
     
     """
 
@@ -158,10 +162,12 @@ trans.translator_hash['or']   = translate:(ctx, node)->
   a_hyp_list = "a_hyp_list_#{ctx.tmp_var_idx}"
   ctx.tmp_var_idx++
   
-  {catch_first} = ctx
+  {catch_first, no_trash} = ctx
+  ctx.no_trash = true
   pass1 = ctx.translate node.value_array[0]
   ctx.catch_first = catch_first
   pass2 = ctx.translate node.value_array[2]
+  ctx.no_trash = no_trash
   
   """
   #{bak_hyp_list} = hyp_list

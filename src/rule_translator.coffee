@@ -46,7 +46,7 @@ strict_parser = require './strict_parser'
         #{rule_fn_name} : (start_pos, only_new = false)->
           group_idx = 1
           
-          zero_hyp = new Hypothesis
+          zero_hyp = Hypothesis.pool_new()
           zero_hyp.a = start_pos
           zero_hyp.b = start_pos
           hyp_list = [zero_hyp.clone()]
@@ -131,6 +131,7 @@ strict_parser = require './strict_parser'
   require 'fy'
   {Node} = require #{JSON.stringify opt.gram_module}
   class Hypothesis
+    @pool_list : []
     a : 0
     b : 0
     list : []
@@ -138,8 +139,19 @@ strict_parser = require './strict_parser'
     constructor : ()->
       @list = []
     
+    @pool_new : ()->
+      if Hypothesis.pool_list.length
+        Hypothesis.pool_list.pop()
+      else
+        new Hypothesis
+    
+    delete : ()->
+      @list.clear()
+      Hypothesis.pool_list.push @
+      return
+    
     clone : ()->
-      ret = new Hypothesis
+      ret = Hypothesis.pool_new()
       ret.a = @a
       ret.b = @b
       ret.list = @list.clone()
