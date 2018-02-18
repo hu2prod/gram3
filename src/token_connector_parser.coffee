@@ -25,28 +25,22 @@ trans.translator_hash['join']   = translate:(ctx, node)->
   list = deep ctx, node
   list.join('\n')
 
-aux_filter_gen = (ctx)->
-  aux_filter = ""
-  if ctx.catch_first
-    ctx.catch_first = false
-    aux_filter = """
-    if only_new
-      filter_hyp_list = []
-      for hyp in hyp_list
-        continue if !hyp._is_new
-        filter_hyp_list.push hyp
-      hyp_list = filter_hyp_list
-    
-    """
-  aux_filter
-  
 trans.translator_hash['const']   = translate:(ctx, node)->
   value = node.value_array[0].value
   value = value.substr 1 if value[0] == "\\"
   value = JSON.stringify(value) if value[0] != "'"
   
+  aux_drop = ""
+  if ctx.catch_first
+    ctx.catch_first = false
+    aux_drop = """
+      if only_new
+        hyp_list = []
+      """
+  
   label = node.mx_hash.label
   """
+  #{aux_drop}
   prev_hyp_list = hyp_list
   hyp_list = []
   for hyp_base in prev_hyp_list
@@ -62,22 +56,40 @@ trans.translator_hash['const']   = translate:(ctx, node)->
         }
         hyp_list.push hyp
       break
-  #{aux_filter_gen ctx}
+  
   """
 wrap_collide = (loc_res, ctx)->
-  """
-  prev_hyp_list = hyp_list
-  hyp_list = []
-  for hyp in prev_hyp_list
-    for append_me in #{loc_res}
-      hyp_add = hyp.clone()
-      hyp_add.push {
-        token : append_me
-        label : 'TODO_tok_pos'
-      }
-      hyp_list.push hyp_add
-  #{aux_filter_gen ctx}
-  """
+  if ctx.catch_first
+    ctx.catch_first = false
+    """
+    prev_hyp_list = hyp_list
+    hyp_list = []
+    for hyp in prev_hyp_list
+      for append_me in #{loc_res}
+        if only_new
+          continue if !append_me._is_new
+        hyp_add = hyp.clone()
+        hyp_add.push {
+          token : append_me
+          label : 'TODO_tok_pos'
+        }
+        hyp_list.push hyp_add
+    
+    """
+  else
+    """
+    prev_hyp_list = hyp_list
+    hyp_list = []
+    for hyp in prev_hyp_list
+      for append_me in #{loc_res}
+        hyp_add = hyp.clone()
+        hyp_add.push {
+          token : append_me
+          label : 'TODO_tok_pos'
+        }
+        hyp_list.push hyp_add
+    
+    """
 
 trans.translator_hash['ref']   = translate:(ctx, node)->
   value = node.value_array[0].value
