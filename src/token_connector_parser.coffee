@@ -22,7 +22,6 @@ trans.translator_hash['pass']   = translate:(ctx, node)->
   list.join('\n')
 
 trans.translator_hash['join']   = translate:(ctx, node)->
-  ctx.catch_first = true
   list = deep ctx, node
   list.join('\n')
 
@@ -176,6 +175,7 @@ trans.translator_hash['or']   = translate:(ctx, node)->
   }
 
 @translate = (ast)->
+  trans.catch_first = true
   trans.go ast
 
 

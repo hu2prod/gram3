@@ -37,13 +37,6 @@ strict_parser = require './strict_parser'
       
       rule_code = token_connector_parser.translate rule.token_connector.ast
       
-      aux_new_check = ""
-      if rule.can_only_new_call
-        aux_new_check = """
-        if only_new
-          continue if !hyp._is_new
-        """
-      
       strict_jl = []
       for strict_rule in rule.strict_list
         strict_jl.push "continue if !(#{strict_parser.translate strict_rule.ast, rule})"
@@ -62,7 +55,6 @@ strict_parser = require './strict_parser'
           
           node_list = []
           for hyp in hyp_list
-            #{make_tab aux_new_check, '    '}
             node = new Node
             node.mx_hash.rule = #{JSON.stringify rule_fn_name}
             vv_list = []
