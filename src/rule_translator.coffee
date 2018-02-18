@@ -61,6 +61,7 @@ strict_parser = require './strict_parser'
             for obj in hyp.list
               node.value_array.push obj
               vv_list.push obj.value_view or obj.value
+            hyp.delete()
             node.value_view = vv_list.join ' '
             
             arg_list = node.value_array
