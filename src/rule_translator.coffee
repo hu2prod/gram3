@@ -59,9 +59,8 @@ strict_parser = require './strict_parser'
             node.mx_hash.rule = #{JSON.stringify rule_fn_name}
             vv_list = []
             for obj in hyp.list
-              # TODO obj.label -> hash_pos_idx
-              node.value_array.push obj.token
-              vv_list.push obj.token.value_view or obj.token.value
+              node.value_array.push obj
+              vv_list.push obj.value_view or obj.value
             node.value_view = vv_list.join ' '
             
             arg_list = node.value_array
@@ -160,9 +159,9 @@ strict_parser = require './strict_parser'
     
     push   : (proxy_node)->
       @list.push proxy_node
-      @b = proxy_node.token.b
+      @b = proxy_node.b
       if @list.length == 1
-        @_is_new = proxy_node.token._is_new
+        @_is_new = proxy_node._is_new
       return
     
   drop_stub = []
