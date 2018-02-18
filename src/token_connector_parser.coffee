@@ -22,9 +22,25 @@ trans.translator_hash['pass']   = translate:(ctx, node)->
   list.join('\n')
 
 trans.translator_hash['join']   = translate:(ctx, node)->
+  ctx.catch_first = true
   list = deep ctx, node
   list.join('\n')
 
+aux_filter_gen = (ctx)->
+  aux_filter = ""
+  if ctx.catch_first
+    ctx.catch_first = false
+    aux_filter = """
+    if only_new
+      filter_hyp_list = []
+      for hyp in hyp_list
+        continue if !hyp._is_new
+        filter_hyp_list.push hyp
+      hyp_list = filter_hyp_list
+    
+    """
+  aux_filter
+  
 trans.translator_hash['const']   = translate:(ctx, node)->
   value = node.value_array[0].value
   value = value.substr 1 if value[0] == "\\"
@@ -47,9 +63,9 @@ trans.translator_hash['const']   = translate:(ctx, node)->
         }
         hyp_list.push hyp
       break
-  
+  #{aux_filter_gen ctx}
   """
-wrap_collide = (loc_res)->
+wrap_collide = (loc_res, ctx)->
   """
   prev_hyp_list = hyp_list
   hyp_list = []
@@ -61,14 +77,14 @@ wrap_collide = (loc_res)->
         label : 'TODO_tok_pos'
       }
       hyp_list.push hyp_add
-  
+  #{aux_filter_gen ctx}
   """
 
 trans.translator_hash['ref']   = translate:(ctx, node)->
   value = node.value_array[0].value
   name = value.substr(1)
   label = node.mx_hash.label
-  wrap_collide "@token_#{name} hyp.b"
+  wrap_collide "@token_#{name} hyp.b", ctx
 
 wrap_inner = (inner, variation)->
   aux_option = ""
@@ -108,7 +124,7 @@ wrap_inner = (inner, variation)->
       ext_hyp_list.push wrap_hyp
     #{if variation == 'option' then 'break' else ''}
   hyp_list = store
-  #{wrap_collide 'ext_hyp_list'}
+  #{wrap_collide 'ext_hyp_list', ctx}
   """
   
 trans.translator_hash['plus']   = translate:(ctx, node)->
@@ -130,12 +146,18 @@ trans.translator_hash['or']   = translate:(ctx, node)->
   bak_hyp_list = "bak_hyp_list_#{ctx.tmp_var_idx}"
   a_hyp_list = "a_hyp_list_#{ctx.tmp_var_idx}"
   ctx.tmp_var_idx++
+  
+  {catch_first} = ctx
+  pass1 = ctx.translate node.value_array[0]
+  ctx.catch_first = catch_first
+  pass2 = ctx.translate node.value_array[2]
+  
   """
   #{bak_hyp_list} = hyp_list
-  #{ctx.translate node.value_array[0]}
+  #{pass1}
   #{a_hyp_list} = hyp_list
   hyp_list = #{bak_hyp_list}
-  #{ctx.translate node.value_array[2]}
+  #{pass2}
   hyp_list = arr_merge #{a_hyp_list}, hyp_list
   
   """
