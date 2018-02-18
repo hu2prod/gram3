@@ -11,6 +11,7 @@ strict_parser = require './strict_parser'
   token_jl = []
   for group in scope.group_rule_list
     ret_hash = group.hash_key
+    ret_hash_idx = group.hash_key_idx
     
     code_jl = []
     code_new_jl = []
@@ -27,6 +28,7 @@ strict_parser = require './strict_parser'
       
       mx_hash_setup_jl = []
       mx_hash_setup_jl.push "mx_hash_stub.hash_key = #{JSON.stringify ret_hash}"
+      mx_hash_setup_jl.push "mx_hash_stub.hash_key_idx = #{ret_hash_idx}"
       for mx_rule in rule.mx_list
         if mx_rule.autoassign
           mx_hash_setup_jl.push "mx_hash_stub[#{JSON.stringify mx_rule.key}] = node.value_array[0].mx_hash[#{JSON.stringify mx_rule.key}]"
@@ -52,7 +54,6 @@ strict_parser = require './strict_parser'
           group_idx = 1
           
           zero_hyp = new Hypothesis
-          zero_hyp.ret_hash = #{JSON.stringify ret_hash}
           zero_hyp.a = start_pos
           zero_hyp.b = start_pos
           hyp_list = [zero_hyp.clone()]
@@ -92,13 +93,12 @@ strict_parser = require './strict_parser'
     aux_recursive = ""
     if can_recursive
       drop_aux = """
-      @drop[start_pos][#{JSON.stringify ret_hash}] ?= -1
-      @drop[start_pos][#{JSON.stringify ret_hash}]++
-      return [] if @drop[start_pos][#{JSON.stringify ret_hash}]
+      @drop[start_pos][#{ret_hash_idx}]++
+      return [] if @drop[start_pos][#{ret_hash_idx}]
       
       """
       aux_recursive = """
-      if @drop[start_pos][#{JSON.stringify ret_hash}]
+      if @drop[start_pos][#{ret_hash_idx}]
         # recursive case
         for node in node_list
           node._is_new = true
@@ -122,18 +122,16 @@ strict_parser = require './strict_parser'
         if start_pos >= @cache.length
           ### !pragma coverage-skip-block ###
           return []
-        return ret if ret = @cache[start_pos][#{JSON.stringify ret_hash}]
+        return ret if ret = @cache[start_pos][#{ret_hash_idx}]
         #{make_tab drop_aux, '  '}
         node_list = []
         #{join_list code_jl, '  '}
         
-        FAcache = @cache[start_pos][#{JSON.stringify ret_hash}] = node_list
+        FAcache = @cache[start_pos][#{ret_hash_idx}] = node_list
         #{make_tab aux_recursive, '  '}
         return FAcache
       
       """
-  
-  # cache[hash_key] -> cache[hash_key_idx]
   
   start_hash_key = scope.expected_token
   
@@ -143,7 +141,6 @@ strict_parser = require './strict_parser'
   class Hypothesis
     a : 0
     b : 0
-    ret_hash : ''
     list : []
     _is_new : false
     constructor : ()->
@@ -153,7 +150,6 @@ strict_parser = require './strict_parser'
       ret = new Hypothesis
       ret.a = @a
       ret.b = @b
-      ret.ret_hash = @ret_hash
       ret.list = @list.clone()
       ret._is_new = @_is_new
       ret
@@ -165,6 +161,12 @@ strict_parser = require './strict_parser'
         @_is_new = proxy_node.token._is_new
       return
     
+  drop_stub = []
+  for i in [0 ... #{scope.hash_key_list.length}]
+    drop_stub.push -1
+  cache_stub = new Array #{scope.hash_key_list.length}
+  
+  hash_key_list = #{JSON.stringify scope.hash_key_list, null, 2}
   
   class @Parser
     cache     : []
@@ -175,14 +177,15 @@ strict_parser = require './strict_parser'
       @cache = []
       @drop  = []
       for token_list,idx in token_list_list
-        stub = {}
+        stub = cache_stub.slice()
         for token in token_list
           token.a = idx
           token.b = idx+1
-          stub[token.mx_hash.hash_key] = [token]
-          stub['*'] = [token]
+          if -1 != idx = hash_key_list.idx token.mx_hash.hash_key
+            stub[idx] = [token]
+          stub[0] = [token]
         @cache.push stub
-        @drop.push {}
+        @drop.push drop_stub.slice()
       
       list = @#{wrap_hk start_hash_key}(0)
       max_token = token_list_list.length

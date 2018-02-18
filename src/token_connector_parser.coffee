@@ -36,7 +36,8 @@ trans.translator_hash['const']   = translate:(ctx, node)->
   hyp_list = []
   for hyp_base in prev_hyp_list
     loop
-      break if !token_list = @cache[hyp_base.b]?['*']
+      break if hyp_base.b >= @cache.length
+      token_list = @cache[hyp_base.b][0]
       for token in token_list
         break if token.value != #{value}
         hyp = hyp_base.clone()

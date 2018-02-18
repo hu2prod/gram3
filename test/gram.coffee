@@ -60,7 +60,6 @@ describe 'gram section', ()->
     tok_list = t.go 'hello'
     
     res_list = prsr.go tok_list
-    
     assert.equal res_list.length, 1
     assert.equal res_list[0].mx_hash.hash_key, 'stmt'
     assert.equal res_list[0].value_array.length, 1

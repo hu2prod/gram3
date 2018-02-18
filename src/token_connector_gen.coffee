@@ -28,7 +28,6 @@ require 'fy'
 class Hypothesis
   a : 0
   b : 0
-  ret_hash : ''
   list : []
   _is_new : false
   constructor : ()->
@@ -38,7 +37,6 @@ class Hypothesis
     ret = new Hypothesis
     ret.a = @a
     ret.b = @b
-    ret.ret_hash = @ret_hash
     ret.list = @list.clone()
     ret._is_new = @_is_new
     ret
@@ -50,6 +48,27 @@ class Hypothesis
       @_is_new = proxy_node.token._is_new
     return
   
+drop_stub = []
+for i in [0 ... 14]
+  drop_stub.push -1
+cache_stub = new Array 14
+
+hash_key_list = [
+  "_",
+  "atom",
+  "q_token",
+  "token",
+  "escape_token",
+  "hash_id",
+  "expr",
+  "or",
+  "stmt",
+  "option",
+  "plus",
+  "star",
+  "bra_op",
+  "bra_cl"
+]
 
 class @Parser
   cache     : []
@@ -60,14 +79,15 @@ class @Parser
     @cache = []
     @drop  = []
     for token_list,idx in token_list_list
-      stub = {}
+      stub = cache_stub.slice()
       for token in token_list
         token.a = idx
         token.b = idx+1
-        stub[token.mx_hash.hash_key] = [token]
-        stub['*'] = [token]
+        if -1 != idx = hash_key_list.idx token.mx_hash.hash_key
+          stub[idx] = [token]
+        stub[0] = [token]
       @cache.push stub
-      @drop.push {}
+      @drop.push drop_stub.slice()
     
     list = @token_stmt(0)
     max_token = token_list_list.length
@@ -78,11 +98,24 @@ class @Parser
     # Прим. А все ошибки, почему не прошло ... смотрим и анализируем @cache и @drop
     filter_list
   
+  token__ : (start_pos)->
+    if start_pos >= @cache.length
+      ### !pragma coverage-skip-block ###
+      return []
+    return ret if ret = @cache[start_pos][0]
+    
+    node_list = []
+    
+    
+    FAcache = @cache[start_pos][0] = node_list
+    
+    return FAcache
+  
   token_atom : (start_pos)->
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["atom"]
+    return ret if ret = @cache[start_pos][1]
     
     node_list = []
     node_list.append @rule_Hq_token_ultEconst__u1 start_pos
@@ -91,7 +124,7 @@ class @Parser
     node_list.append @rule_Hhash_id_ultEref__u4 start_pos
     node_list.append @rule_Hbra_op_Hstmt_Hbra_cl_ultEbra__u10 start_pos
     
-    FAcache = @cache[start_pos]["atom"] = node_list
+    FAcache = @cache[start_pos][1] = node_list
     
     return FAcache
   
@@ -99,12 +132,12 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["q_token"]
+    return ret if ret = @cache[start_pos][2]
     
     node_list = []
     
     
-    FAcache = @cache[start_pos]["q_token"] = node_list
+    FAcache = @cache[start_pos][2] = node_list
     
     return FAcache
   
@@ -112,12 +145,12 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["token"]
+    return ret if ret = @cache[start_pos][3]
     
     node_list = []
     
     
-    FAcache = @cache[start_pos]["token"] = node_list
+    FAcache = @cache[start_pos][3] = node_list
     
     return FAcache
   
@@ -125,12 +158,12 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["escape_token"]
+    return ret if ret = @cache[start_pos][4]
     
     node_list = []
     
     
-    FAcache = @cache[start_pos]["escape_token"] = node_list
+    FAcache = @cache[start_pos][4] = node_list
     
     return FAcache
   
@@ -138,12 +171,12 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["hash_id"]
+    return ret if ret = @cache[start_pos][5]
     
     node_list = []
     
     
-    FAcache = @cache[start_pos]["hash_id"] = node_list
+    FAcache = @cache[start_pos][5] = node_list
     
     return FAcache
   
@@ -151,13 +184,13 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["expr"]
+    return ret if ret = @cache[start_pos][6]
     
     node_list = []
     node_list.append @rule_Hatom_ultEpass__u5 start_pos
     node_list.append @rule_Hatom_Hor_Hexpr_ultEor__u6 start_pos
     
-    FAcache = @cache[start_pos]["expr"] = node_list
+    FAcache = @cache[start_pos][6] = node_list
     
     return FAcache
   
@@ -165,12 +198,12 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["or"]
+    return ret if ret = @cache[start_pos][7]
     
     node_list = []
     
     
-    FAcache = @cache[start_pos]["or"] = node_list
+    FAcache = @cache[start_pos][7] = node_list
     
     return FAcache
   
@@ -178,7 +211,7 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["stmt"]
+    return ret if ret = @cache[start_pos][8]
     
     node_list = []
     node_list.append @rule_Hatom_Hoption_ultEoption__u7 start_pos
@@ -187,7 +220,7 @@ class @Parser
     node_list.append @rule_Hexpr_ultEpass__u11 start_pos
     node_list.append @rule_Hexpr_Hstmt_ultEjoin__u12 start_pos
     
-    FAcache = @cache[start_pos]["stmt"] = node_list
+    FAcache = @cache[start_pos][8] = node_list
     
     return FAcache
   
@@ -195,12 +228,12 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["option"]
+    return ret if ret = @cache[start_pos][9]
     
     node_list = []
     
     
-    FAcache = @cache[start_pos]["option"] = node_list
+    FAcache = @cache[start_pos][9] = node_list
     
     return FAcache
   
@@ -208,12 +241,12 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["plus"]
+    return ret if ret = @cache[start_pos][10]
     
     node_list = []
     
     
-    FAcache = @cache[start_pos]["plus"] = node_list
+    FAcache = @cache[start_pos][10] = node_list
     
     return FAcache
   
@@ -221,12 +254,12 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["star"]
+    return ret if ret = @cache[start_pos][11]
     
     node_list = []
     
     
-    FAcache = @cache[start_pos]["star"] = node_list
+    FAcache = @cache[start_pos][11] = node_list
     
     return FAcache
   
@@ -234,12 +267,12 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["bra_op"]
+    return ret if ret = @cache[start_pos][12]
     
     node_list = []
     
     
-    FAcache = @cache[start_pos]["bra_op"] = node_list
+    FAcache = @cache[start_pos][12] = node_list
     
     return FAcache
   
@@ -247,12 +280,12 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["bra_cl"]
+    return ret if ret = @cache[start_pos][13]
     
     node_list = []
     
     
-    FAcache = @cache[start_pos]["bra_cl"] = node_list
+    FAcache = @cache[start_pos][13] = node_list
     
     return FAcache
   
@@ -261,7 +294,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "atom"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -295,6 +327,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "atom"
+      mx_hash_stub.hash_key_idx = 1
       mx_hash_stub["ult"] = "const"
       
       node.a = node.value_array[0].a
@@ -309,7 +342,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "atom"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -343,6 +375,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "atom"
+      mx_hash_stub.hash_key_idx = 1
       mx_hash_stub["ult"] = "const"
       
       node.a = node.value_array[0].a
@@ -357,7 +390,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "atom"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -391,6 +423,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "atom"
+      mx_hash_stub.hash_key_idx = 1
       mx_hash_stub["ult"] = "const"
       
       node.a = node.value_array[0].a
@@ -405,7 +438,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "atom"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -439,6 +471,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "atom"
+      mx_hash_stub.hash_key_idx = 1
       mx_hash_stub["ult"] = "ref"
       
       node.a = node.value_array[0].a
@@ -453,7 +486,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "atom"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -509,6 +541,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "atom"
+      mx_hash_stub.hash_key_idx = 1
       mx_hash_stub["ult"] = "bra"
       
       node.a = node.value_array[0].a
@@ -523,7 +556,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "expr"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -557,6 +589,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "expr"
+      mx_hash_stub.hash_key_idx = 6
       mx_hash_stub["ult"] = "pass"
       
       node.a = node.value_array[0].a
@@ -571,7 +604,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "expr"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -627,6 +659,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "expr"
+      mx_hash_stub.hash_key_idx = 6
       mx_hash_stub["ult"] = "or"
       
       node.a = node.value_array[0].a
@@ -641,7 +674,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "stmt"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -686,6 +718,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "stmt"
+      mx_hash_stub.hash_key_idx = 8
       mx_hash_stub["ult"] = "option"
       
       node.a = node.value_array[0].a
@@ -700,7 +733,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "stmt"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -745,6 +777,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "stmt"
+      mx_hash_stub.hash_key_idx = 8
       mx_hash_stub["ult"] = "plus"
       
       node.a = node.value_array[0].a
@@ -759,7 +792,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "stmt"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -804,6 +836,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "stmt"
+      mx_hash_stub.hash_key_idx = 8
       mx_hash_stub["ult"] = "star"
       
       node.a = node.value_array[0].a
@@ -818,7 +851,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "stmt"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -852,6 +884,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "stmt"
+      mx_hash_stub.hash_key_idx = 8
       mx_hash_stub["ult"] = "pass"
       
       node.a = node.value_array[0].a
@@ -866,7 +899,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "stmt"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -911,6 +943,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "stmt"
+      mx_hash_stub.hash_key_idx = 8
       mx_hash_stub["ult"] = "join"
       
       node.a = node.value_array[0].a

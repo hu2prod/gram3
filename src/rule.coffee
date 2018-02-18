@@ -100,11 +100,6 @@ class @Gram_rule
 # ###################################################################################################
 #    Gram_scope
 # ###################################################################################################
-###
-TODO cache split + move to number id
-  rule uid cache
-  hash_key_idx cache
-###
 
 class @Gram_scope
   initial_rule_list   : []
@@ -151,7 +146,7 @@ class @Gram_scope
     # prepare
     # _hash_key_list_init
     @hash_key_list.clear()
-    # @hash_key_list.push '*' # special position for string constants
+    @hash_key_list.push '_' # special position for string constants
     @hash_key_list.uappend @extra_hash_key_list
     
     for rule in @initial_rule_list
@@ -198,6 +193,7 @@ class @Gram_scope
     for hash_key in @hash_key_list
       @group_rule_list.push {
         hash_key
+        hash_key_idx : @hash_key_list.idx hash_key
         list : []
       }
     

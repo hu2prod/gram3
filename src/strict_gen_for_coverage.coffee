@@ -58,7 +58,6 @@ require 'fy'
 class Hypothesis
   a : 0
   b : 0
-  ret_hash : ''
   list : []
   _is_new : false
   constructor : ()->
@@ -68,7 +67,6 @@ class Hypothesis
     ret = new Hypothesis
     ret.a = @a
     ret.b = @b
-    ret.ret_hash = @ret_hash
     ret.list = @list.clone()
     ret._is_new = @_is_new
     ret
@@ -80,6 +78,25 @@ class Hypothesis
       @_is_new = proxy_node.token._is_new
     return
   
+drop_stub = []
+for i in [0 ... 12]
+  drop_stub.push -1
+cache_stub = new Array 12
+
+hash_key_list = [
+  "_",
+  "pre_op",
+  "bin_op",
+  "access_rvalue",
+  "dollar_id",
+  "hash_id",
+  "rvalue",
+  "number",
+  "id",
+  "string_literal_singleq",
+  "string_literal_doubleq",
+  "strict_rule"
+]
 
 class @Parser
   cache     : []
@@ -90,14 +107,15 @@ class @Parser
     @cache = []
     @drop  = []
     for token_list,idx in token_list_list
-      stub = {}
+      stub = cache_stub.slice()
       for token in token_list
         token.a = idx
         token.b = idx+1
-        stub[token.mx_hash.hash_key] = [token]
-        stub['*'] = [token]
+        if -1 != idx = hash_key_list.idx token.mx_hash.hash_key
+          stub[idx] = [token]
+        stub[0] = [token]
       @cache.push stub
-      @drop.push {}
+      @drop.push drop_stub.slice()
     
     list = @token_strict_rule(0)
     max_token = token_list_list.length
@@ -108,18 +126,31 @@ class @Parser
     # Прим. А все ошибки, почему не прошло ... смотрим и анализируем @cache и @drop
     filter_list
   
+  token__ : (start_pos)->
+    if start_pos >= @cache.length
+      ### !pragma coverage-skip-block ###
+      return []
+    return ret if ret = @cache[start_pos][0]
+    
+    node_list = []
+    
+    
+    FAcache = @cache[start_pos][0] = node_list
+    
+    return FAcache
+  
   token_pre_op : (start_pos)->
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["pre_op"]
+    return ret if ret = @cache[start_pos][1]
     
     node_list = []
     node_list.append @rule_XX_priorityE1__u1 start_pos
     node_list.append @rule_XX_priorityE1__u2 start_pos
     node_list.append @rule_XP_priorityE1__u3 start_pos
     
-    FAcache = @cache[start_pos]["pre_op"] = node_list
+    FAcache = @cache[start_pos][1] = node_list
     
     return FAcache
   
@@ -127,7 +158,7 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["bin_op"]
+    return ret if ret = @cache[start_pos][2]
     
     node_list = []
     node_list.append @rule_XSXXX_priorityE5__right_assocE1__u4 start_pos
@@ -135,7 +166,7 @@ class @Parser
     node_list.append @rule_XXXXXXEXXXXXXXXEXXXXEXXXXXXXXEEX_priorityE9__u6 start_pos
     node_list.append @rule_XXXXXXXXXXXXXXXXX_priorityE10_right_assocE1__u7 start_pos
     
-    FAcache = @cache[start_pos]["bin_op"] = node_list
+    FAcache = @cache[start_pos][2] = node_list
     
     return FAcache
   
@@ -143,14 +174,14 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["access_rvalue"]
+    return ret if ret = @cache[start_pos][3]
     
     node_list = []
     node_list.append @rule_Hdollar_id_priorityEX9000_ultEdollar_id__u8 start_pos
     node_list.append @rule_Hhash_id_priorityEX9000_ultEhash_id__u9 start_pos
     node_list.append @rule_Hhash_id_XX_Hnumber_XX_priorityEX9000_ultEhash_array_access__u19 start_pos
     
-    FAcache = @cache[start_pos]["access_rvalue"] = node_list
+    FAcache = @cache[start_pos][3] = node_list
     
     return FAcache
   
@@ -158,12 +189,12 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["dollar_id"]
+    return ret if ret = @cache[start_pos][4]
     
     node_list = []
     
     
-    FAcache = @cache[start_pos]["dollar_id"] = node_list
+    FAcache = @cache[start_pos][4] = node_list
     
     return FAcache
   
@@ -171,12 +202,12 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["hash_id"]
+    return ret if ret = @cache[start_pos][5]
     
     node_list = []
     
     
-    FAcache = @cache[start_pos]["hash_id"] = node_list
+    FAcache = @cache[start_pos][5] = node_list
     
     return FAcache
   
@@ -184,10 +215,9 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["rvalue"]
-    @drop[start_pos]["rvalue"] ?= -1
-    @drop[start_pos]["rvalue"]++
-    return [] if @drop[start_pos]["rvalue"]
+    return ret if ret = @cache[start_pos][6]
+    @drop[start_pos][6]++
+    return [] if @drop[start_pos][6]
     
     node_list = []
     node_list.append @rule_Haccess_rvalue_priorityEX9000_ultEaccess_rvalue__u10 start_pos
@@ -202,8 +232,8 @@ class @Parser
     node_list.append @rule_Haccess_rvalue_XX_Hnumber_XX_Hnumber_XX_priorityEX9000_ultEslice_access__u20 start_pos
     node_list.append @rule_Haccess_rvalue_XX_Hid_priorityEX9000_ultEfield_access__u21 start_pos
     
-    FAcache = @cache[start_pos]["rvalue"] = node_list
-    if @drop[start_pos]["rvalue"]
+    FAcache = @cache[start_pos][6] = node_list
+    if @drop[start_pos][6]
       # recursive case
       for node in node_list
         node._is_new = true
@@ -235,12 +265,12 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["number"]
+    return ret if ret = @cache[start_pos][7]
     
     node_list = []
     
     
-    FAcache = @cache[start_pos]["number"] = node_list
+    FAcache = @cache[start_pos][7] = node_list
     
     return FAcache
   
@@ -248,12 +278,12 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["id"]
+    return ret if ret = @cache[start_pos][8]
     
     node_list = []
     
     
-    FAcache = @cache[start_pos]["id"] = node_list
+    FAcache = @cache[start_pos][8] = node_list
     
     return FAcache
   
@@ -261,12 +291,12 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["string_literal_singleq"]
+    return ret if ret = @cache[start_pos][9]
     
     node_list = []
     
     
-    FAcache = @cache[start_pos]["string_literal_singleq"] = node_list
+    FAcache = @cache[start_pos][9] = node_list
     
     return FAcache
   
@@ -274,12 +304,12 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["string_literal_doubleq"]
+    return ret if ret = @cache[start_pos][10]
     
     node_list = []
     
     
-    FAcache = @cache[start_pos]["string_literal_doubleq"] = node_list
+    FAcache = @cache[start_pos][10] = node_list
     
     return FAcache
   
@@ -287,12 +317,12 @@ class @Parser
     if start_pos >= @cache.length
       ### !pragma coverage-skip-block ###
       return []
-    return ret if ret = @cache[start_pos]["strict_rule"]
+    return ret if ret = @cache[start_pos][11]
     
     node_list = []
     node_list.append @rule_Hrvalue_ultEdeep__u22 start_pos
     
-    FAcache = @cache[start_pos]["strict_rule"] = node_list
+    FAcache = @cache[start_pos][11] = node_list
     
     return FAcache
   
@@ -301,7 +331,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "pre_op"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -310,7 +339,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != "!"
           hyp = hyp_base.clone()
@@ -339,6 +369,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "pre_op"
+      mx_hash_stub.hash_key_idx = 1
       mx_hash_stub["priority"] = 1
       
       node.a = node.value_array[0].a
@@ -353,7 +384,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "pre_op"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -362,7 +392,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != "-"
           hyp = hyp_base.clone()
@@ -391,6 +422,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "pre_op"
+      mx_hash_stub.hash_key_idx = 1
       mx_hash_stub["priority"] = 1
       
       node.a = node.value_array[0].a
@@ -405,7 +437,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "pre_op"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -414,7 +445,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != "+"
           hyp = hyp_base.clone()
@@ -443,6 +475,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "pre_op"
+      mx_hash_stub.hash_key_idx = 1
       mx_hash_stub["priority"] = 1
       
       node.a = node.value_array[0].a
@@ -457,7 +490,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "bin_op"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -467,7 +499,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != "*"
           hyp = hyp_base.clone()
@@ -484,7 +517,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != "/"
           hyp = hyp_base.clone()
@@ -515,6 +549,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "bin_op"
+      mx_hash_stub.hash_key_idx = 2
       mx_hash_stub["priority"] = 5
       mx_hash_stub["right_assoc"] = 1
       
@@ -530,7 +565,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "bin_op"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -540,7 +574,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != "+"
           hyp = hyp_base.clone()
@@ -557,7 +592,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != "-"
           hyp = hyp_base.clone()
@@ -588,6 +624,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "bin_op"
+      mx_hash_stub.hash_key_idx = 2
       mx_hash_stub["priority"] = 6
       mx_hash_stub["right_assoc"] = 1
       
@@ -603,7 +640,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "bin_op"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -613,7 +649,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != '<'
           hyp = hyp_base.clone()
@@ -631,7 +668,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != '<='
           hyp = hyp_base.clone()
@@ -649,7 +687,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != '>'
           hyp = hyp_base.clone()
@@ -667,7 +706,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != '>='
           hyp = hyp_base.clone()
@@ -685,7 +725,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != '!='
           hyp = hyp_base.clone()
@@ -703,7 +744,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != '<>'
           hyp = hyp_base.clone()
@@ -720,7 +762,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != '=='
           hyp = hyp_base.clone()
@@ -761,6 +804,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "bin_op"
+      mx_hash_stub.hash_key_idx = 2
       mx_hash_stub["priority"] = 9
       
       node.a = node.value_array[0].a
@@ -775,7 +819,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "bin_op"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -785,7 +828,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != '&'
           hyp = hyp_base.clone()
@@ -803,7 +847,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != '&&'
           hyp = hyp_base.clone()
@@ -821,7 +866,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != '|'
           hyp = hyp_base.clone()
@@ -838,7 +884,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != '||'
           hyp = hyp_base.clone()
@@ -873,6 +920,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "bin_op"
+      mx_hash_stub.hash_key_idx = 2
       mx_hash_stub["priority"] = 10
       mx_hash_stub["right_assoc"] = 1
       
@@ -888,7 +936,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "access_rvalue"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -922,6 +969,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "access_rvalue"
+      mx_hash_stub.hash_key_idx = 3
       mx_hash_stub["priority"] = -9000
       mx_hash_stub["ult"] = "dollar_id"
       
@@ -937,7 +985,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "access_rvalue"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -971,6 +1018,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "access_rvalue"
+      mx_hash_stub.hash_key_idx = 3
       mx_hash_stub["priority"] = -9000
       mx_hash_stub["ult"] = "hash_id"
       
@@ -986,7 +1034,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "access_rvalue"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -1006,7 +1053,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != "["
           hyp = hyp_base.clone()
@@ -1032,7 +1080,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != "]"
           hyp = hyp_base.clone()
@@ -1061,6 +1110,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "access_rvalue"
+      mx_hash_stub.hash_key_idx = 3
       mx_hash_stub["priority"] = -9000
       mx_hash_stub["ult"] = "hash_array_access"
       
@@ -1076,7 +1126,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "rvalue"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -1111,6 +1160,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "rvalue"
+      mx_hash_stub.hash_key_idx = 6
       mx_hash_stub["priority"] = -9000
       mx_hash_stub["ult"] = "access_rvalue"
       
@@ -1126,7 +1176,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "rvalue"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -1161,6 +1210,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "rvalue"
+      mx_hash_stub.hash_key_idx = 6
       mx_hash_stub["priority"] = -9000
       mx_hash_stub["ult"] = "value"
       
@@ -1176,7 +1226,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "rvalue"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -1211,6 +1260,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "rvalue"
+      mx_hash_stub.hash_key_idx = 6
       mx_hash_stub["priority"] = -9000
       mx_hash_stub["ult"] = "wrap_string"
       
@@ -1226,7 +1276,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "rvalue"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -1261,6 +1310,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "rvalue"
+      mx_hash_stub.hash_key_idx = 6
       mx_hash_stub["priority"] = -9000
       mx_hash_stub["ult"] = "value"
       
@@ -1276,7 +1326,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "rvalue"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -1311,6 +1360,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "rvalue"
+      mx_hash_stub.hash_key_idx = 6
       mx_hash_stub["priority"] = -9000
       mx_hash_stub["ult"] = "value"
       
@@ -1326,7 +1376,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "rvalue"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -1384,6 +1433,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "rvalue"
+      mx_hash_stub.hash_key_idx = 6
       mx_hash_stub["priority"] = arg_list[1].mx_hash.priority
       mx_hash_stub["ult"] = "bin_op"
       
@@ -1399,7 +1449,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "rvalue"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -1458,6 +1507,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "rvalue"
+      mx_hash_stub.hash_key_idx = 6
       mx_hash_stub["priority"] = arg_list[1].mx_hash.priority
       mx_hash_stub["ult"] = "bin_op"
       
@@ -1473,7 +1523,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "rvalue"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -1519,6 +1568,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "rvalue"
+      mx_hash_stub.hash_key_idx = 6
       mx_hash_stub["priority"] = arg_list[0].mx_hash.priority
       mx_hash_stub["ult"] = "pre_op"
       
@@ -1534,7 +1584,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "rvalue"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -1543,7 +1592,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != "("
           hyp = hyp_base.clone()
@@ -1569,7 +1619,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != ")"
           hyp = hyp_base.clone()
@@ -1599,6 +1650,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "rvalue"
+      mx_hash_stub.hash_key_idx = 6
       mx_hash_stub["priority"] = -9000
       mx_hash_stub["ult"] = "bra"
       
@@ -1614,7 +1666,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "rvalue"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -1634,7 +1685,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != "["
           hyp = hyp_base.clone()
@@ -1660,7 +1712,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != ":"
           hyp = hyp_base.clone()
@@ -1686,7 +1739,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != "]"
           hyp = hyp_base.clone()
@@ -1716,6 +1770,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "rvalue"
+      mx_hash_stub.hash_key_idx = 6
       mx_hash_stub["priority"] = -9000
       mx_hash_stub["ult"] = "slice_access"
       
@@ -1731,7 +1786,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "rvalue"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -1751,7 +1805,8 @@ class @Parser
     hyp_list = []
     for hyp_base in prev_hyp_list
       loop
-        break if !token_list = @cache[hyp_base.b]?['*']
+        break if hyp_base.b >= @cache.length
+        token_list = @cache[hyp_base.b][0]
         for token in token_list
           break if token.value != "."
           hyp = hyp_base.clone()
@@ -1792,6 +1847,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "rvalue"
+      mx_hash_stub.hash_key_idx = 6
       mx_hash_stub["priority"] = -9000
       mx_hash_stub["ult"] = "field_access"
       
@@ -1807,7 +1863,6 @@ class @Parser
     group_idx = 1
     
     zero_hyp = new Hypothesis
-    zero_hyp.ret_hash = "strict_rule"
     zero_hyp.a = start_pos
     zero_hyp.b = start_pos
     hyp_list = [zero_hyp.clone()]
@@ -1841,6 +1896,7 @@ class @Parser
       
       mx_hash_stub = node.mx_hash
       mx_hash_stub.hash_key = "strict_rule"
+      mx_hash_stub.hash_key_idx = 11
       mx_hash_stub["ult"] = "deep"
       
       node.a = node.value_array[0].a
