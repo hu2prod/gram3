@@ -3,7 +3,8 @@ require 'fy'
 {Node} = require './node'
 strict_parser = require './strict_parser'
 token_connector_parser = require './token_connector_parser'
-rule_translator = require './rule_translator'
+# rule_translator = require './rule_translator'
+rule_translator = require './rule_translator_alt'
 
 # ###################################################################################################
 #    Gram_rule
@@ -195,12 +196,16 @@ class @Gram_scope
         hash_key
         hash_key_idx : @hash_key_list.idx hash_key
         list : []
+        # can_recursive : false
       }
     
     for rule in @initial_rule_list
       @group_rule_list[rule.ret_hash_key_idx].list.push rule
     
-    # 
+    # for group in @group_rule_list
+    #   for rule in group.list
+    #     group.can_recursive or= rule.can_recursive
+     
     rule_translator.translate @, opt
   
   
