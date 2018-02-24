@@ -106,12 +106,14 @@ class @Gram_scope
   group_rule_list     : []
   extra_hash_key_list : []
   hash_key_list       : []
+  _extended_hash_key_list: []
   expected_token      : 'stmt'
   
   constructor : ()->
     @initial_rule_list  = []
     @extra_hash_key_list= []
     @hash_key_list      = []
+    @_extended_hash_key_list= []
   
   rule : (_ret, str_list)->
     @initial_rule_list.push ret = new module.Gram_rule
@@ -205,6 +207,7 @@ class @Gram_scope
     #   for rule in group.list
     #     group.can_recursive or= rule.can_recursive
      
+    @_extended_hash_key_list = @hash_key_list.clone()
     rule_translator.translate @, opt
   
   
