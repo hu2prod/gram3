@@ -20,6 +20,8 @@ class @Node
   cmp       : (t) ->
     for k,v of @mx_hash
       return false if v != t.mx_hash[k]
+    for k,v of t.mx_hash
+      return false if v != @mx_hash[k]
     return false if @value != t.value
     true
   
@@ -34,7 +36,15 @@ class @Node
   
   clone : ()->
     ret = new module.Node
-    for k,v of @
-      continue if typeof v == 'function'
-      ret[k] = clone v unless ret[k] == v
+    ret.mx_hash       = clone @mx_hash
+    ret.hash_key_idx  = @hash_key_idx
+    ret.value         = @value       
+    ret.value_view    = @value_view  
+    ret.value_array   = @value_array.clone()
+    ret.line          = @line        
+    ret.pos           = @pos         
+    ret.a             = @a           
+    ret.b             = @b           
+    ret._is_new       = @_is_new     
+    
     ret

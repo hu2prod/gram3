@@ -3,8 +3,7 @@ require 'fy'
 {Node} = require './node'
 strict_parser = require './strict_parser'
 token_connector_parser = require './token_connector_parser'
-# rule_translator = require './rule_translator'
-rule_translator = require './rule_translator_alt'
+rule_translator = require './rule_translator'
 
 # ###################################################################################################
 #    Gram_rule

@@ -13,7 +13,10 @@ describe 'tokenizer section', ()->
     n1.value = '123'
     n1.value_array = ['123']
     n2 = n1.clone()
-    util.json_eq n1, n2
+    # util.json_eq n1, n2
+    util.json_eq n1.mx_hash, n2.mx_hash
+    assert.equal n1.value, n2.value
+    util.json_eq n1.value_array, n2.value_array
     assert n1.cmp n2
     return
    
