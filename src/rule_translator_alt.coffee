@@ -16,9 +16,10 @@ strict_parser = require './strict_parser'
     code_jl.push """
       node_list.append @#{rule_fn_name} start_pos
       """
-    code_new_jl.push """
-      node_list.append @#{rule_fn_name} start_pos, true
-      """
+    if rule.can_recursive
+      code_new_jl.push """
+        node_list.append @#{rule_fn_name} start_pos, true
+        """
   
   drop_aux =""
   aux_recursive = ""
