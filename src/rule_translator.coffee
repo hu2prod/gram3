@@ -51,7 +51,7 @@ strict_parser = require './strict_parser'
       """
   
   drop_aux_queue = ""
-  aux_recursive = "@cache[start_pos][#{group.hash_key_idx}] = node_list"
+  aux_recursive = "FAcache[start_pos][#{group.hash_key_idx}] = node_list"
   if can_recursive
     drop_aux_queue = """
     if FAdrop[start_pos][#{group.hash_key_idx}]
@@ -121,7 +121,7 @@ strict_parser = require './strict_parser'
   aux_const_check = ""
   casual_wrap = (prev_code, access_idx)->
     return "" if prev_code == "" and access_idx == 0
-    access_str = "@cache[#{b}][#{access_idx}]"
+    access_str = "FAcache[#{b}][#{access_idx}]"
     iterator = if is_collect or access_idx == 0
       "list_#{pp_idx} = #{access_str}"
     else
