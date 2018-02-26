@@ -260,11 +260,6 @@ strict_parser = require './strict_parser'
   arg_list = node.value_array
   #{join_list strict_jl}
   
-  vv_list = []
-  for obj in node.value_array
-    vv_list.push obj.value_view or obj.value
-  node.value_view = vv_list.join ' '
-  
   mx_hash_stub = node.mx_hash = {}
   mx_hash_stub.rule = #{JSON.stringify rule_fn_name}
   
@@ -358,9 +353,22 @@ strict_parser = require './strict_parser'
       
       filter_list = []
       for v in list
-        filter_list.push v if v.b == max_token
+        if v.b == max_token
+          @node_fix v
+          filter_list.push v
       # Прим. А все ошибки, почему не прошло ... смотрим и анализируем @cache
       filter_list
+    
+    node_fix : (node)->
+      walk = (node)->
+        vv_list = []
+        for v in node.value_array
+          walk v
+          vv_list.push v.value_view or v.value
+        node.value_view = vv_list.join ' '
+        return
+      walk node
+      return
   
     fsm : ()->
       FAcache = @cache
