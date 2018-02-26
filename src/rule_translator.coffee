@@ -187,21 +187,22 @@ strict_parser = require './strict_parser'
         sub_jl.push """
           #{module.pos_translate scope, rule, sub_pos, 1, payload, is_collect}
           """
-      code = """
-      #{aux_skip}
-      hyp_list_#{pp_idx} = []
-      old_node = node
-      node = @proxy
-      #{join_list sub_jl}
-      node = old_node
-      
-      for tok_list in hyp_list_#{pp_idx}
-        node.value_array.append tok_list
+      if code
+        code = """
+        #{aux_skip}
+        hyp_list_#{pp_idx} = []
+        old_node = node
+        node = @proxy
+        #{join_list sub_jl}
+        node = old_node
         
-        #{make_tab code, '  '}
-        
-        node.value_array.length -= tok_list.length
-      """
+        for tok_list in hyp_list_#{pp_idx}
+          node.value_array.append tok_list
+          
+          #{make_tab code, '  '}
+          
+          node.value_array.length -= tok_list.length
+        """
   
   code
 
@@ -249,6 +250,8 @@ strict_parser = require './strict_parser'
   while pp_idx = parse_position_list.length
     pos = parse_position_list.pop()
     code_queue = module.pos_translate scope, rule, pos, pp_idx, code_queue, false
+  # OPT
+  code_queue = code_queue.replace /(\n\s+)node/g, '$1# node'
   # ###################################################################################################
   
   parse_position_list = backup_parse_position_list
