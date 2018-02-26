@@ -47,28 +47,28 @@ strict_parser = require './strict_parser'
         """
     code_collect_jl.push """
       ### #{rule_fn_name} ###
-      node_list.append @cache[start_pos][#{rule_idx}]
+      node_list.append FAcache[start_pos][#{rule_idx}]
       """
   
   drop_aux_queue = ""
   aux_recursive = "@cache[start_pos][#{group.hash_key_idx}] = node_list"
   if can_recursive
     drop_aux_queue = """
-    if @drop[start_pos][#{group.hash_key_idx}]
-      @cache[start_pos][#{group.hash_key_idx}] ?= []
+    if FAdrop[start_pos][#{group.hash_key_idx}]
+      FAcache[start_pos][#{group.hash_key_idx}] ?= []
       continue
-    @drop[start_pos][#{group.hash_key_idx}] = 1
+    FAdrop[start_pos][#{group.hash_key_idx}] = 1
     """
     aux_recursive = """
     for node in node_list
       node._is_new = true
-    if append_list = @cache[start_pos][#{group.hash_key_idx}]
+    if append_list = FAcache[start_pos][#{group.hash_key_idx}]
       for node in append_list
         node._is_new = false
       append_list.uappend node_list
     else
-      @cache[start_pos][#{group.hash_key_idx}] = node_list
-    if @drop[start_pos][#{group.hash_key_idx}]
+      FAcache[start_pos][#{group.hash_key_idx}] = node_list
+    if FAdrop[start_pos][#{group.hash_key_idx}]
       if node_list.last()?._is_new
         # recursive case
         stack.push [
@@ -303,7 +303,7 @@ strict_parser = require './strict_parser'
     node = new @Node
     node.a = start_pos
     #{make_tab code_collect, '  '}
-    @cache[start_pos][#{rule_idx}] = ret_list
+    FAcache[start_pos][#{rule_idx}] = ret_list
   """
 
 @translate = (scope)->
@@ -360,6 +360,8 @@ strict_parser = require './strict_parser'
       filter_list
   
     fsm : ()->
+      FAcache = @cache
+      FAdrop = @drop
       stack = [
         [
           #{hash_key_list.idx scope.expected_token}
@@ -377,11 +379,11 @@ strict_parser = require './strict_parser'
         ] = cur
         continue if start_pos >= length
         if !only_new
-          continue if list = @cache[start_pos][hki]
+          continue if list = FAcache[start_pos][hki]
         
         switch hki
           #{join_list token_jl, '        '}
           #{join_list rule_jl, '        '}
       
-      @cache[start_pos][#{hash_key_list.idx scope.expected_token}]
+      FAcache[start_pos][#{hash_key_list.idx scope.expected_token}]
   """
