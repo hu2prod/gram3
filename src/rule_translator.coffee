@@ -47,27 +47,27 @@ strict_parser = require './strict_parser'
         """
     code_collect_jl.push """
       ### #{rule_fn_name} ###
-      node_list.append FAcache[start_pos][#{rule_idx}]
+      node_list.append FAcache_#{rule_idx}[start_pos]
       """
   
   drop_aux_queue = ""
-  aux_recursive = "FAcache[start_pos][#{group.hash_key_idx}] = node_list"
+  aux_recursive = "FAcache_#{group.hash_key_idx}[start_pos] = node_list"
   if can_recursive
     drop_aux_queue = """
     if FAdrop[start_pos][#{group.hash_key_idx}]
-      FAcache[start_pos][#{group.hash_key_idx}] ?= []
+      FAcache_#{group.hash_key_idx}[start_pos] ?= []
       continue
     FAdrop[start_pos][#{group.hash_key_idx}] = 1
     """
     aux_recursive = """
     for node in node_list
       node._is_new = true
-    if append_list = FAcache[start_pos][#{group.hash_key_idx}]
+    if append_list = FAcache_#{group.hash_key_idx}[start_pos]
       for node in append_list
         node._is_new = false
       append_list.uappend node_list
     else
-      FAcache[start_pos][#{group.hash_key_idx}] = node_list
+      FAcache_#{group.hash_key_idx}[start_pos] = node_list
     if FAdrop[start_pos][#{group.hash_key_idx}]
       if node_list.last()?._is_new
         # recursive case
@@ -121,7 +121,7 @@ strict_parser = require './strict_parser'
   aux_const_check = ""
   casual_wrap = (prev_code, access_idx)->
     return "" if prev_code == "" and access_idx == 0
-    access_str = "FAcache[#{b}][#{access_idx}]"
+    access_str = "FAcache_#{access_idx}[#{b}]"
     iterator = if is_collect or access_idx == 0
       "list_#{pp_idx} = #{access_str}"
     else
@@ -300,7 +300,7 @@ strict_parser = require './strict_parser'
     node = new @Node
     node.a = start_pos
     #{make_tab code_collect, '  '}
-    FAcache[start_pos][#{rule_idx}] = ret_list
+    FAcache_#{rule_idx}[start_pos] = ret_list
   """
 
 @translate = (scope)->
@@ -313,13 +313,17 @@ strict_parser = require './strict_parser'
       rule_jl.push @translate_rule rule, group, scope
     token_jl.push @translate_group group, scope
   
-  hash_key_list = scope._extended_hash_key_list
+  FAcache_jl = []
+  for hki in [0 ... scope._extended_hash_key_list.length]
+    FAcache_jl.push """
+      FAcache_#{hki} = @cache[#{hki}]
+      """
+  
   """
   require 'fy'
   drop_stub = []
   for i in [0 ... #{scope.hash_key_list.length}]
     drop_stub.push 0
-  cache_stub = new Array #{hash_key_list.length}
   
   hash_key_list = #{JSON.stringify bak_hash_key_list, null, 2}
   
@@ -336,16 +340,18 @@ strict_parser = require './strict_parser'
       @length = token_list_list.length
       @Node = token_list_list[0]?[0]?.constructor
       @proxy= new @Node
-      for token_list,idx in token_list_list
-        stub = cache_stub.slice()
+      for hki in [0 ... #{scope._extended_hash_key_list.length}]
+        @cache.push new Array @length
+      
+      for token_list,pos in token_list_list
         for token in token_list
-          token.a = idx
-          token.b = idx+1
-          if -1 != idx = hash_key_list.idx token.mx_hash.hash_key
-            stub[idx] = [token]
-          stub[0] = [token]
-        @cache.push stub
+          token.a = pos
+          token.b = pos+1
+          if -1 != hki = hash_key_list.idx token.mx_hash.hash_key
+            @cache[hki][pos] = [token]
+          @cache[0][pos] = [token]
         @drop.push drop_stub.slice()
+      
       
       list = @fsm()
       max_token = token_list_list.length
@@ -371,10 +377,11 @@ strict_parser = require './strict_parser'
   
     fsm : ()->
       FAcache = @cache
+      #{join_list FAcache_jl, '    '}
       FAdrop = @drop
       stack = [
         [
-          #{hash_key_list.idx scope.expected_token}
+          #{scope._extended_hash_key_list.idx scope.expected_token}
           0
           0
         ]
@@ -389,11 +396,11 @@ strict_parser = require './strict_parser'
         ] = cur
         continue if start_pos >= length
         if !only_new
-          continue if list = FAcache[start_pos][hki]
+          continue if list = FAcache[hki][start_pos]
         
         switch hki
           #{join_list token_jl, '        '}
           #{join_list rule_jl, '        '}
       
-      FAcache[start_pos][#{hash_key_list.idx scope.expected_token}]
+      FAcache_#{scope._extended_hash_key_list.idx scope.expected_token}[start_pos] or []
   """
