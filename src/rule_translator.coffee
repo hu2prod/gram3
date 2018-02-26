@@ -294,8 +294,8 @@ strict_parser = require './strict_parser'
     chk_len = stack.length
     ret_list = []
     b_0 = start_pos
-    node = new @Node
-    node.a = start_pos
+    # node = new @Node
+    # node.a = start_pos
     #{make_tab code_queue, '  '}
     if chk_len == stack.length
       stack[chk_len-1][0] = #{ext_rule_idx}
