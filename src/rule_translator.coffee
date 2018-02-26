@@ -281,12 +281,11 @@ strict_parser = require './strict_parser'
   """
   when #{rule_idx}
     ### #{rule_fn_name} queue ###
-    stack.push [
+    chk_len = stack.push [
       #{rule_idx}
       start_pos
       only_new
     ]
-    chk_len = stack.length
     ret_list = []
     b_0 = start_pos
     # node = new @Node
