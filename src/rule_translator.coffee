@@ -57,7 +57,7 @@ strict_parser = require './strict_parser'
     if @drop[start_pos][#{group.hash_key_idx}]
       @cache[start_pos][#{group.hash_key_idx}] ?= []
       continue
-    @drop[start_pos][#{group.hash_key_idx}]++
+    @drop[start_pos][#{group.hash_key_idx}] = 1
     """
     aux_recursive = """
     for node in node_list
@@ -69,14 +69,14 @@ strict_parser = require './strict_parser'
     else
       @cache[start_pos][#{group.hash_key_idx}] = node_list
     if @drop[start_pos][#{group.hash_key_idx}]
-      @drop[start_pos][#{group.hash_key_idx}] = 0
-      # recursive case
-      stack.push [
-        #{ext_idx}
-        start_pos
-        1
-      ]
-      #{join_list code_queue_recursive_jl, '  '}
+      if node_list.last()?._is_new
+        # recursive case
+        stack.push [
+          #{ext_idx}
+          start_pos
+          1
+        ]
+        #{join_list code_queue_recursive_jl, '    '}
     """
   
   """
