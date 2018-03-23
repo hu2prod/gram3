@@ -23,6 +23,9 @@ describe 'mx_rule section', ()->
     r=#a[1]
     r=#a[1][1:2]
     r=$1==1
+    r="1"=="1"
+    r='1'=='1'
+    r='1'=="1"
   """.split /\n/g
   for v in list
     do (v)->
@@ -100,6 +103,8 @@ describe 'mx_rule section', ()->
     "a=$1.mx"   : {a:1}
     "a=$1.mx+1" : {a:2}
     "a=$1"      : {a:'1'}
+    "a='1'"     : {a:'1'}
+    "a=\"1\""   : {a:'1'}
   for k,v of hash_kv
     do (k,v)->
       it "'#{k}' works properly with 1", ()->

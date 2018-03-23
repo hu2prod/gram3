@@ -25,6 +25,7 @@ tokenizer.parser_list.push (new Token_parser 'bra_op',  /^\(/ )
 tokenizer.parser_list.push (new Token_parser 'bra_cl',  /^\)/ )
 tokenizer.parser_list.push (new Token_parser 'or',      /^\|/ )
 tokenizer.parser_list.push (new Token_parser 'q_token', /^\'[^']*\'/ )
+tokenizer.parser_list.push (new Token_parser 'dq_token', /^\"[^"]*\"/ )
 tokenizer.parser_list.push (new Token_parser 'token',   /^[_a-z0-9]+/ )
 tokenizer.parser_list.push (new Token_parser 'escape_token', /^\\\S/ )
 
@@ -36,6 +37,7 @@ gs = new Gram_scope
 q = (a, b)->gs.rule a,b
 
 q('atom',  '#q_token')              .mx('ult=const')
+q('atom',  '#dq_token')             .mx('ult=const')
 q('atom',  '#token')                .mx('ult=const')
 q('atom',  '#escape_token')         .mx('ult=const')
 q('atom',  '#hash_id')              .mx('ult=ref')
@@ -91,6 +93,15 @@ describe 'tc parser parts section', ()->
     assert.equal res_list[0].value_array[0].mx_hash.hash_key, 'expr'
     assert.equal res_list[0].value_array[0].value_array[0].mx_hash.hash_key, 'atom'
     assert.equal res_list[0].value_array[0].value_array[0].value_array[0].mx_hash.hash_key, 'q_token'
+  
+  it "dq_token a", ()->
+    res_list = parse '"a"'
+    
+    assert.equal res_list.length, 1
+    assert.equal res_list[0].mx_hash.hash_key, 'stmt'
+    assert.equal res_list[0].value_array[0].mx_hash.hash_key, 'expr'
+    assert.equal res_list[0].value_array[0].value_array[0].mx_hash.hash_key, 'atom'
+    assert.equal res_list[0].value_array[0].value_array[0].value_array[0].mx_hash.hash_key, 'dq_token'
   
   it "escape_token \\+", ()->
     res_list = parse "\\+"

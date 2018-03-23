@@ -166,7 +166,15 @@ strict_parser = require './strict_parser'
     when 'const'
       value = pos.value_array[0].value
       value = value.substr 1 if value[0] == "\\"
-      value = JSON.stringify(value) if value[0] != "'"
+      
+      need_escape = true
+      first = value[0]
+      last  = value[value.length-1]
+      if value.length >= 2
+        if first == last
+          if first in ["'", "\""]
+            need_escape = false
+      value = JSON.stringify(value) if need_escape
       aux_const_check = """
         continue if tok.value != #{value}
         """

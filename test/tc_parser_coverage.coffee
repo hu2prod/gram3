@@ -7,6 +7,7 @@ describe 'tc parser coverage section', ()->
   a
   #a
   'a'
+  \"a\"
   \\\\+
   a b
   a b c
