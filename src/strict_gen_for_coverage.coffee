@@ -54,34 +54,10 @@ tokenizer.parser_list.push (new Token_parser 'number', /^[0-9]+/)
 # ###################################################################################################
 
 require 'fy'
-{Node} = require "./node"
-class Hypothesis
-  a : 0
-  b : 0
-  list : []
-  _is_new : false
-  constructor : ()->
-    @list = []
-  
-  clone : ()->
-    ret = new Hypothesis
-    ret.a = @a
-    ret.b = @b
-    ret.list = @list.clone()
-    ret._is_new = @_is_new
-    ret
-  
-  push   : (proxy_node)->
-    @list.push proxy_node
-    @b = proxy_node.token.b
-    if @list.length == 1
-      @_is_new = proxy_node.token._is_new
-    return
-  
 drop_stub = []
 for i in [0 ... 12]
-  drop_stub.push -1
-cache_stub = new Array 12
+  drop_stub.push 0
+cache_stub = new Array 68
 
 hash_key_list = [
   "_",
@@ -99,13 +75,19 @@ hash_key_list = [
 ]
 
 class @Parser
-  cache     : []
-  drop      : []
-  constructor : ()->
+  length: 0
+  cache : []
+  drop  : []
+  Node  : null
+  proxy : null
   
   go : (token_list_list)->
-    @cache = []
-    @drop  = []
+    @cache= []
+    @drop = []
+    @length = token_list_list.length
+    return [] if @length == 0
+    @Node = token_list_list[0]?[0]?.constructor
+    @proxy= new @Node
     for token_list,idx in token_list_list
       stub = cache_stub.slice()
       for token in token_list
@@ -117,1795 +99,2143 @@ class @Parser
       @cache.push stub
       @drop.push drop_stub.slice()
     
-    list = @token_strict_rule(0)
+    list = @fsm()
     max_token = token_list_list.length
     
     filter_list = []
     for v in list
-      filter_list.push v if v.b == max_token
-    # Прим. А все ошибки, почему не прошло ... смотрим и анализируем @cache и @drop
+      if v.b == max_token
+        @node_fix v
+        filter_list.push v
+    # Прим. А все ошибки, почему не прошло ... смотрим и анализируем @cache
     filter_list
   
-  token__ : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][0]
+  node_fix : (node)->
+    walk = (node)->
+      vv_list = []
+      for v in node.value_array
+        walk v
+        vv_list.push v.value_view or v.value
+      node.value_view = vv_list.join ' '
+      return
+    walk node
+    return
+
+  fsm : ()->
+    FAcache = @cache
+    FAdrop = @drop
+    stack = [
+      [
+        11
+        0
+        0
+      ]
+    ]
+    length = @length
     
-    node_list = []
-    
-    
-    FAcache = @cache[start_pos][0] = node_list
-    
-    return FAcache
-  
-  token_pre_op : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][1]
-    
-    node_list = []
-    node_list.append @rule_XX_priorityE1__u1 start_pos
-    node_list.append @rule_XX_priorityE1__u2 start_pos
-    node_list.append @rule_XP_priorityE1__u3 start_pos
-    
-    FAcache = @cache[start_pos][1] = node_list
-    
-    return FAcache
-  
-  token_bin_op : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][2]
-    
-    node_list = []
-    node_list.append @rule_XSXXX_priorityE5__right_assocE1__u4 start_pos
-    node_list.append @rule_XPXXX_priorityE6__right_assocE1__u5 start_pos
-    node_list.append @rule_XXXXXXEXXXXXXXXEXXXXEXXXXXXXXEEX_priorityE9__u6 start_pos
-    node_list.append @rule_XXXXXXXXXXXXXXXXX_priorityE10_right_assocE1__u7 start_pos
-    
-    FAcache = @cache[start_pos][2] = node_list
-    
-    return FAcache
-  
-  token_access_rvalue : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][3]
-    
-    node_list = []
-    node_list.append @rule_Hdollar_id_priorityEX9000_ultEdollar_id__u8 start_pos
-    node_list.append @rule_Hhash_id_priorityEX9000_ultEhash_id__u9 start_pos
-    node_list.append @rule_Hhash_id_XX_Hnumber_XX_priorityEX9000_ultEhash_array_access__u19 start_pos
-    
-    FAcache = @cache[start_pos][3] = node_list
-    
-    return FAcache
-  
-  token_dollar_id : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][4]
-    
-    node_list = []
-    
-    
-    FAcache = @cache[start_pos][4] = node_list
-    
-    return FAcache
-  
-  token_hash_id : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][5]
-    
-    node_list = []
-    
-    
-    FAcache = @cache[start_pos][5] = node_list
-    
-    return FAcache
-  
-  token_rvalue : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][6]
-    @drop[start_pos][6]++
-    return [] if @drop[start_pos][6]
-    
-    node_list = []
-    node_list.append @rule_Haccess_rvalue_priorityEX9000_ultEaccess_rvalue__u10 start_pos
-    node_list.append @rule_Hnumber_priorityEX9000_ultEvalue__u11 start_pos
-    node_list.append @rule_Hid_priorityEX9000_ultEwrap_string__u12 start_pos
-    node_list.append @rule_Hstring_literal_singleq_priorityEX9000_ultEvalue__u13 start_pos
-    node_list.append @rule_Hstring_literal_doubleq_priorityEX9000_ultEvalue__u14 start_pos
-    node_list.append @rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityXHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_u15 start_pos
-    node_list.append @rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16 start_pos
-    node_list.append @rule_Hpre_op_Hrvalue_priorityEHpre_opXpriority_ultEpre_op_HrvalueX1XXpriorityXEHpre_opXpriority_u17 start_pos
-    node_list.append @rule_XX_Hrvalue_XX_priorityEX9000_ultEbra__u18 start_pos
-    node_list.append @rule_Haccess_rvalue_XX_Hnumber_XX_Hnumber_XX_priorityEX9000_ultEslice_access__u20 start_pos
-    node_list.append @rule_Haccess_rvalue_XX_Hid_priorityEX9000_ultEfield_access__u21 start_pos
-    
-    FAcache = @cache[start_pos][6] = node_list
-    if @drop[start_pos][6]
-      # recursive case
-      for node in node_list
-        node._is_new = true
-      loop
-        old_node_list = node_list
-        node_list = []
-        node_list.append @rule_Haccess_rvalue_priorityEX9000_ultEaccess_rvalue__u10 start_pos, true
-        node_list.append @rule_Hnumber_priorityEX9000_ultEvalue__u11 start_pos, true
-        node_list.append @rule_Hid_priorityEX9000_ultEwrap_string__u12 start_pos, true
-        node_list.append @rule_Hstring_literal_singleq_priorityEX9000_ultEvalue__u13 start_pos, true
-        node_list.append @rule_Hstring_literal_doubleq_priorityEX9000_ultEvalue__u14 start_pos, true
-        node_list.append @rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityXHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_u15 start_pos, true
-        node_list.append @rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16 start_pos, true
-        node_list.append @rule_Hpre_op_Hrvalue_priorityEHpre_opXpriority_ultEpre_op_HrvalueX1XXpriorityXEHpre_opXpriority_u17 start_pos, true
-        node_list.append @rule_XX_Hrvalue_XX_priorityEX9000_ultEbra__u18 start_pos, true
-        node_list.append @rule_Haccess_rvalue_XX_Hnumber_XX_Hnumber_XX_priorityEX9000_ultEslice_access__u20 start_pos, true
-        node_list.append @rule_Haccess_rvalue_XX_Hid_priorityEX9000_ultEfield_access__u21 start_pos, true
-        break if node_list.length == 0
+    while cur = stack.pop()
+      [
+        hki
+        start_pos
+        only_new
+      ] = cur
+      continue if start_pos >= length
+      if !only_new
+        continue if list = FAcache[start_pos][hki]
+      
+      switch hki
+        when 0
+          ### token__ queue ###
+          
+          stack.push [
+            12
+            start_pos
+            0
+          ]
+        when 12
+          ### token__ collect ###
+          node_list = []
+          
+          FAcache[start_pos][0] = node_list
         
-        for node in old_node_list
-          node._is_new = false
-        for node in node_list
-          node._is_new = true
+        when 1
+          ### token_pre_op queue ###
+          
+          stack.push [
+            19
+            start_pos
+            0
+          ]
+          ### rule_XX_priorityE1__u1 ###
+          stack.push [
+            13
+            start_pos
+            0
+          ]
+          ### rule_XX_priorityE1__u2 ###
+          stack.push [
+            15
+            start_pos
+            0
+          ]
+          ### rule_XP_priorityE1__u3 ###
+          stack.push [
+            17
+            start_pos
+            0
+          ]
+        when 19
+          ### token_pre_op collect ###
+          node_list = []
+          ### rule_XX_priorityE1__u1 ###
+          node_list.append FAcache[start_pos][13]
+          ### rule_XX_priorityE1__u2 ###
+          node_list.append FAcache[start_pos][15]
+          ### rule_XP_priorityE1__u3 ###
+          node_list.append FAcache[start_pos][17]
+          FAcache[start_pos][1] = node_list
         
-        FAcache.append node_list
-    return FAcache
-  
-  token_number : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][7]
-    
-    node_list = []
-    
-    
-    FAcache = @cache[start_pos][7] = node_list
-    
-    return FAcache
-  
-  token_id : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][8]
-    
-    node_list = []
-    
-    
-    FAcache = @cache[start_pos][8] = node_list
-    
-    return FAcache
-  
-  token_string_literal_singleq : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][9]
-    
-    node_list = []
-    
-    
-    FAcache = @cache[start_pos][9] = node_list
-    
-    return FAcache
-  
-  token_string_literal_doubleq : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][10]
-    
-    node_list = []
-    
-    
-    FAcache = @cache[start_pos][10] = node_list
-    
-    return FAcache
-  
-  token_strict_rule : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][11]
-    
-    node_list = []
-    node_list.append @rule_Hrvalue_ultEdeep__u22 start_pos
-    
-    FAcache = @cache[start_pos][11] = node_list
-    
-    return FAcache
-  
-  # rule("pre_op", "\\!")                             .mx("priority=1")
-  rule_XX_priorityE1__u1 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != "!"
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_XX_priorityE1__u1"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "pre_op"
-      mx_hash_stub.hash_key_idx = 1
-      mx_hash_stub["priority"] = 1
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("pre_op", "\\-")                             .mx("priority=1")
-  rule_XX_priorityE1__u2 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != "-"
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_XX_priorityE1__u2"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "pre_op"
-      mx_hash_stub.hash_key_idx = 1
-      mx_hash_stub["priority"] = 1
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("pre_op", "\\+")                             .mx("priority=1")
-  rule_XP_priorityE1__u3 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != "+"
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_XP_priorityE1__u3"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "pre_op"
-      mx_hash_stub.hash_key_idx = 1
-      mx_hash_stub["priority"] = 1
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("bin_op", "\\*|\\/")                         .mx("priority=5  right_assoc=1")
-  rule_XSXXX_priorityE5__right_assocE1__u4 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    bak_hyp_list_0 = hyp_list
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != "*"
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    a_hyp_list_0 = hyp_list
-    hyp_list = bak_hyp_list_0
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != "/"
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    hyp_list = arr_merge a_hyp_list_0, hyp_list
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_XSXXX_priorityE5__right_assocE1__u4"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "bin_op"
-      mx_hash_stub.hash_key_idx = 2
-      mx_hash_stub["priority"] = 5
-      mx_hash_stub["right_assoc"] = 1
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("bin_op", "\\+|\\-")                         .mx("priority=6  right_assoc=1")
-  rule_XPXXX_priorityE6__right_assocE1__u5 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    bak_hyp_list_1 = hyp_list
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != "+"
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    a_hyp_list_1 = hyp_list
-    hyp_list = bak_hyp_list_1
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != "-"
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    hyp_list = arr_merge a_hyp_list_1, hyp_list
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_XPXXX_priorityE6__right_assocE1__u5"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "bin_op"
-      mx_hash_stub.hash_key_idx = 2
-      mx_hash_stub["priority"] = 6
-      mx_hash_stub["right_assoc"] = 1
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("bin_op", "'<'|'<='|'>'|'>='|'!='|'<>'|'=='").mx("priority=9")
-  rule_XXXXXXEXXXXXXXXEXXXXEXXXXXXXXEEX_priorityE9__u6 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    bak_hyp_list_2 = hyp_list
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != '<'
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    a_hyp_list_2 = hyp_list
-    hyp_list = bak_hyp_list_2
-    bak_hyp_list_3 = hyp_list
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != '<='
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    a_hyp_list_3 = hyp_list
-    hyp_list = bak_hyp_list_3
-    bak_hyp_list_4 = hyp_list
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != '>'
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    a_hyp_list_4 = hyp_list
-    hyp_list = bak_hyp_list_4
-    bak_hyp_list_5 = hyp_list
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != '>='
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    a_hyp_list_5 = hyp_list
-    hyp_list = bak_hyp_list_5
-    bak_hyp_list_6 = hyp_list
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != '!='
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    a_hyp_list_6 = hyp_list
-    hyp_list = bak_hyp_list_6
-    bak_hyp_list_7 = hyp_list
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != '<>'
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    a_hyp_list_7 = hyp_list
-    hyp_list = bak_hyp_list_7
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != '=='
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    hyp_list = arr_merge a_hyp_list_7, hyp_list
-    
-    hyp_list = arr_merge a_hyp_list_6, hyp_list
-    
-    hyp_list = arr_merge a_hyp_list_5, hyp_list
-    
-    hyp_list = arr_merge a_hyp_list_4, hyp_list
-    
-    hyp_list = arr_merge a_hyp_list_3, hyp_list
-    
-    hyp_list = arr_merge a_hyp_list_2, hyp_list
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_XXXXXXEXXXXXXXXEXXXXEXXXXXXXXEEX_priorityE9__u6"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "bin_op"
-      mx_hash_stub.hash_key_idx = 2
-      mx_hash_stub["priority"] = 9
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("bin_op", "'&'|'&&'|'|'|'||'")               .mx("priority=10 right_assoc=1")
-  rule_XXXXXXXXXXXXXXXXX_priorityE10_right_assocE1__u7 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    bak_hyp_list_8 = hyp_list
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != '&'
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    a_hyp_list_8 = hyp_list
-    hyp_list = bak_hyp_list_8
-    bak_hyp_list_9 = hyp_list
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != '&&'
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    a_hyp_list_9 = hyp_list
-    hyp_list = bak_hyp_list_9
-    bak_hyp_list_10 = hyp_list
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != '|'
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    a_hyp_list_10 = hyp_list
-    hyp_list = bak_hyp_list_10
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != '||'
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    hyp_list = arr_merge a_hyp_list_10, hyp_list
-    
-    hyp_list = arr_merge a_hyp_list_9, hyp_list
-    
-    hyp_list = arr_merge a_hyp_list_8, hyp_list
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_XXXXXXXXXXXXXXXXX_priorityE10_right_assocE1__u7"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "bin_op"
-      mx_hash_stub.hash_key_idx = 2
-      mx_hash_stub["priority"] = 10
-      mx_hash_stub["right_assoc"] = 1
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("access_rvalue", "#dollar_id")               .mx("priority=-9000 ult=dollar_id")
-  rule_Hdollar_id_priorityEX9000_ultEdollar_id__u8 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_dollar_id hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_Hdollar_id_priorityEX9000_ultEdollar_id__u8"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "access_rvalue"
-      mx_hash_stub.hash_key_idx = 3
-      mx_hash_stub["priority"] = -9000
-      mx_hash_stub["ult"] = "dollar_id"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("access_rvalue", "#hash_id")                 .mx("priority=-9000 ult=hash_id")
-  rule_Hhash_id_priorityEX9000_ultEhash_id__u9 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_hash_id hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_Hhash_id_priorityEX9000_ultEhash_id__u9"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "access_rvalue"
-      mx_hash_stub.hash_key_idx = 3
-      mx_hash_stub["priority"] = -9000
-      mx_hash_stub["ult"] = "hash_id"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("access_rvalue", "#hash_id \\[ #number \\]") .mx("priority=-9000 ult=hash_array_access")
-  rule_Hhash_id_XX_Hnumber_XX_priorityEX9000_ultEhash_array_access__u19 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_hash_id hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != "["
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_number hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != "]"
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_Hhash_id_XX_Hnumber_XX_priorityEX9000_ultEhash_array_access__u19"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "access_rvalue"
-      mx_hash_stub.hash_key_idx = 3
-      mx_hash_stub["priority"] = -9000
-      mx_hash_stub["ult"] = "hash_array_access"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("rvalue", "#access_rvalue")                  .mx("priority=-9000 ult=access_rvalue")
-  rule_Haccess_rvalue_priorityEX9000_ultEaccess_rvalue__u10 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_access_rvalue hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      if only_new
-        continue if !hyp._is_new
-      node = new Node
-      node.mx_hash.rule = "rule_Haccess_rvalue_priorityEX9000_ultEaccess_rvalue__u10"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "rvalue"
-      mx_hash_stub.hash_key_idx = 6
-      mx_hash_stub["priority"] = -9000
-      mx_hash_stub["ult"] = "access_rvalue"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("rvalue", "#number")                         .mx("priority=-9000 ult=value")
-  rule_Hnumber_priorityEX9000_ultEvalue__u11 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_number hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      if only_new
-        continue if !hyp._is_new
-      node = new Node
-      node.mx_hash.rule = "rule_Hnumber_priorityEX9000_ultEvalue__u11"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "rvalue"
-      mx_hash_stub.hash_key_idx = 6
-      mx_hash_stub["priority"] = -9000
-      mx_hash_stub["ult"] = "value"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("rvalue", "#id")                             .mx("priority=-9000 ult=wrap_string")
-  rule_Hid_priorityEX9000_ultEwrap_string__u12 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_id hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      if only_new
-        continue if !hyp._is_new
-      node = new Node
-      node.mx_hash.rule = "rule_Hid_priorityEX9000_ultEwrap_string__u12"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "rvalue"
-      mx_hash_stub.hash_key_idx = 6
-      mx_hash_stub["priority"] = -9000
-      mx_hash_stub["ult"] = "wrap_string"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("rvalue", "#string_literal_singleq")         .mx("priority=-9000 ult=value")
-  rule_Hstring_literal_singleq_priorityEX9000_ultEvalue__u13 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_string_literal_singleq hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      if only_new
-        continue if !hyp._is_new
-      node = new Node
-      node.mx_hash.rule = "rule_Hstring_literal_singleq_priorityEX9000_ultEvalue__u13"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "rvalue"
-      mx_hash_stub.hash_key_idx = 6
-      mx_hash_stub["priority"] = -9000
-      mx_hash_stub["ult"] = "value"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("rvalue", "#string_literal_doubleq")         .mx("priority=-9000 ult=value")
-  rule_Hstring_literal_doubleq_priorityEX9000_ultEvalue__u14 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_string_literal_doubleq hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      if only_new
-        continue if !hyp._is_new
-      node = new Node
-      node.mx_hash.rule = "rule_Hstring_literal_doubleq_priorityEX9000_ultEvalue__u14"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "rvalue"
-      mx_hash_stub.hash_key_idx = 6
-      mx_hash_stub["priority"] = -9000
-      mx_hash_stub["ult"] = "value"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("rvalue", "#rvalue #bin_op #rvalue")         .mx("priority=#bin_op.priority ult=bin_op")       .strict("#rvalue[1].priority<#bin_op.priority #rvalue[2].priority<#bin_op.priority")
-  rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityXHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_u15 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_rvalue hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_bin_op hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_rvalue hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      if only_new
-        continue if !hyp._is_new
-      node = new Node
-      node.mx_hash.rule = "rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityXHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_u15"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      continue if !((arg_list[0].mx_hash.priority<arg_list[1].mx_hash.priority))
-      continue if !((arg_list[2].mx_hash.priority<arg_list[1].mx_hash.priority))
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "rvalue"
-      mx_hash_stub.hash_key_idx = 6
-      mx_hash_stub["priority"] = arg_list[1].mx_hash.priority
-      mx_hash_stub["ult"] = "bin_op"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("rvalue", "#rvalue #bin_op #rvalue")         .mx("priority=#bin_op.priority ult=bin_op")       .strict("#rvalue[1].priority==#bin_op.priority #rvalue[2].priority<#bin_op.priority #bin_op.right_assoc")
-  rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_rvalue hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_bin_op hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_rvalue hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      if only_new
-        continue if !hyp._is_new
-      node = new Node
-      node.mx_hash.rule = "rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      continue if !((arg_list[0].mx_hash.priority==arg_list[1].mx_hash.priority))
-      continue if !((arg_list[2].mx_hash.priority<arg_list[1].mx_hash.priority))
-      continue if !(arg_list[1].mx_hash.right_assoc)
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "rvalue"
-      mx_hash_stub.hash_key_idx = 6
-      mx_hash_stub["priority"] = arg_list[1].mx_hash.priority
-      mx_hash_stub["ult"] = "bin_op"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("rvalue", "#pre_op #rvalue")                 .mx("priority=#pre_op.priority ult=pre_op")       .strict("#rvalue[1].priority<=#pre_op.priority")
-  rule_Hpre_op_Hrvalue_priorityEHpre_opXpriority_ultEpre_op_HrvalueX1XXpriorityXEHpre_opXpriority_u17 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_pre_op hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_rvalue hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      if only_new
-        continue if !hyp._is_new
-      node = new Node
-      node.mx_hash.rule = "rule_Hpre_op_Hrvalue_priorityEHpre_opXpriority_ultEpre_op_HrvalueX1XXpriorityXEHpre_opXpriority_u17"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      continue if !((arg_list[1].mx_hash.priority<=arg_list[0].mx_hash.priority))
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "rvalue"
-      mx_hash_stub.hash_key_idx = 6
-      mx_hash_stub["priority"] = arg_list[0].mx_hash.priority
-      mx_hash_stub["ult"] = "pre_op"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("rvalue", "\\( #rvalue \\)")                 .mx("priority=-9000 ult=bra")
-  rule_XX_Hrvalue_XX_priorityEX9000_ultEbra__u18 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != "("
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_rvalue hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != ")"
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      if only_new
-        continue if !hyp._is_new
-      node = new Node
-      node.mx_hash.rule = "rule_XX_Hrvalue_XX_priorityEX9000_ultEbra__u18"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "rvalue"
-      mx_hash_stub.hash_key_idx = 6
-      mx_hash_stub["priority"] = -9000
-      mx_hash_stub["ult"] = "bra"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("rvalue", "#access_rvalue \\[ #number \\: #number \\]").mx("priority=-9000 ult=slice_access")
-  rule_Haccess_rvalue_XX_Hnumber_XX_Hnumber_XX_priorityEX9000_ultEslice_access__u20 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_access_rvalue hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != "["
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_number hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != ":"
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_number hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != "]"
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      if only_new
-        continue if !hyp._is_new
-      node = new Node
-      node.mx_hash.rule = "rule_Haccess_rvalue_XX_Hnumber_XX_Hnumber_XX_priorityEX9000_ultEslice_access__u20"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "rvalue"
-      mx_hash_stub.hash_key_idx = 6
-      mx_hash_stub["priority"] = -9000
-      mx_hash_stub["ult"] = "slice_access"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("rvalue", "#access_rvalue \\. #id")          .mx("priority=-9000 ult=field_access")
-  rule_Haccess_rvalue_XX_Hid_priorityEX9000_ultEfield_access__u21 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_access_rvalue hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp_base in prev_hyp_list
-      loop
-        break if hyp_base.b >= @cache.length
-        token_list = @cache[hyp_base.b][0]
-        for token in token_list
-          break if token.value != "."
-          hyp = hyp_base.clone()
-          hyp.push {
-            token
-            label : undefined
-          }
-          hyp_list.push hyp
-        break
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_id hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      if only_new
-        continue if !hyp._is_new
-      node = new Node
-      node.mx_hash.rule = "rule_Haccess_rvalue_XX_Hid_priorityEX9000_ultEfield_access__u21"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "rvalue"
-      mx_hash_stub.hash_key_idx = 6
-      mx_hash_stub["priority"] = -9000
-      mx_hash_stub["ult"] = "field_access"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("strict_rule", "#rvalue")                    .mx("ult=deep")
-  rule_Hrvalue_ultEdeep__u22 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_rvalue hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_Hrvalue_ultEdeep__u22"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "strict_rule"
-      mx_hash_stub.hash_key_idx = 11
-      mx_hash_stub["ult"] = "deep"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
+        when 2
+          ### token_bin_op queue ###
+          
+          stack.push [
+            28
+            start_pos
+            0
+          ]
+          ### rule_XSXXX_priorityE5__right_assocE1__u4 ###
+          stack.push [
+            20
+            start_pos
+            0
+          ]
+          ### rule_XPXXX_priorityE6__right_assocE1__u5 ###
+          stack.push [
+            22
+            start_pos
+            0
+          ]
+          ### rule_XXXXXXEXXXXXXXXEXXXXEXXXXXXXXEEX_priorityE9__u6 ###
+          stack.push [
+            24
+            start_pos
+            0
+          ]
+          ### rule_XXXXXXXXXXXXXXXXX_priorityE10_right_assocE1__u7 ###
+          stack.push [
+            26
+            start_pos
+            0
+          ]
+        when 28
+          ### token_bin_op collect ###
+          node_list = []
+          ### rule_XSXXX_priorityE5__right_assocE1__u4 ###
+          node_list.append FAcache[start_pos][20]
+          ### rule_XPXXX_priorityE6__right_assocE1__u5 ###
+          node_list.append FAcache[start_pos][22]
+          ### rule_XXXXXXEXXXXXXXXEXXXXEXXXXXXXXEEX_priorityE9__u6 ###
+          node_list.append FAcache[start_pos][24]
+          ### rule_XXXXXXXXXXXXXXXXX_priorityE10_right_assocE1__u7 ###
+          node_list.append FAcache[start_pos][26]
+          FAcache[start_pos][2] = node_list
+        
+        when 3
+          ### token_access_rvalue queue ###
+          
+          stack.push [
+            35
+            start_pos
+            0
+          ]
+          ### rule_Hdollar_id_priorityEX9000_ultEdollar_id__u8 ###
+          stack.push [
+            29
+            start_pos
+            0
+          ]
+          ### rule_Hhash_id_priorityEX9000_ultEhash_id__u9 ###
+          stack.push [
+            31
+            start_pos
+            0
+          ]
+          ### rule_Hhash_id_XX_Hnumber_XX_priorityEX9000_ultEhash_array_access__u19 ###
+          stack.push [
+            33
+            start_pos
+            0
+          ]
+        when 35
+          ### token_access_rvalue collect ###
+          node_list = []
+          ### rule_Hdollar_id_priorityEX9000_ultEdollar_id__u8 ###
+          node_list.append FAcache[start_pos][29]
+          ### rule_Hhash_id_priorityEX9000_ultEhash_id__u9 ###
+          node_list.append FAcache[start_pos][31]
+          ### rule_Hhash_id_XX_Hnumber_XX_priorityEX9000_ultEhash_array_access__u19 ###
+          node_list.append FAcache[start_pos][33]
+          FAcache[start_pos][3] = node_list
+        
+        when 4
+          ### token_dollar_id queue ###
+          
+          stack.push [
+            36
+            start_pos
+            0
+          ]
+        when 36
+          ### token_dollar_id collect ###
+          node_list = []
+          
+          FAcache[start_pos][4] = node_list
+        
+        when 5
+          ### token_hash_id queue ###
+          
+          stack.push [
+            37
+            start_pos
+            0
+          ]
+        when 37
+          ### token_hash_id collect ###
+          node_list = []
+          
+          FAcache[start_pos][5] = node_list
+        
+        when 6
+          ### token_rvalue queue ###
+          if FAdrop[start_pos][6]
+            FAcache[start_pos][6] ?= []
+            continue
+          FAdrop[start_pos][6] = 1
+          stack.push [
+            60
+            start_pos
+            0
+          ]
+          ### rule_Haccess_rvalue_priorityEX9000_ultEaccess_rvalue__u10 ###
+          stack.push [
+            38
+            start_pos
+            0
+          ]
+          ### rule_Hnumber_priorityEX9000_ultEvalue__u11 ###
+          stack.push [
+            40
+            start_pos
+            0
+          ]
+          ### rule_Hid_priorityEX9000_ultEwrap_string__u12 ###
+          stack.push [
+            42
+            start_pos
+            0
+          ]
+          ### rule_Hstring_literal_singleq_priorityEX9000_ultEvalue__u13 ###
+          stack.push [
+            44
+            start_pos
+            0
+          ]
+          ### rule_Hstring_literal_doubleq_priorityEX9000_ultEvalue__u14 ###
+          stack.push [
+            46
+            start_pos
+            0
+          ]
+          ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityXHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_u15 ###
+          stack.push [
+            48
+            start_pos
+            0
+          ]
+          ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16 ###
+          stack.push [
+            50
+            start_pos
+            0
+          ]
+          ### rule_Hpre_op_Hrvalue_priorityEHpre_opXpriority_ultEpre_op_HrvalueX1XXpriorityXEHpre_opXpriority_u17 ###
+          stack.push [
+            52
+            start_pos
+            0
+          ]
+          ### rule_XX_Hrvalue_XX_priorityEX9000_ultEbra__u18 ###
+          stack.push [
+            54
+            start_pos
+            0
+          ]
+          ### rule_Haccess_rvalue_XX_Hnumber_XX_Hnumber_XX_priorityEX9000_ultEslice_access__u20 ###
+          stack.push [
+            56
+            start_pos
+            0
+          ]
+          ### rule_Haccess_rvalue_XX_Hid_priorityEX9000_ultEfield_access__u21 ###
+          stack.push [
+            58
+            start_pos
+            0
+          ]
+        when 60
+          ### token_rvalue collect ###
+          node_list = []
+          ### rule_Haccess_rvalue_priorityEX9000_ultEaccess_rvalue__u10 ###
+          node_list.append FAcache[start_pos][38]
+          ### rule_Hnumber_priorityEX9000_ultEvalue__u11 ###
+          node_list.append FAcache[start_pos][40]
+          ### rule_Hid_priorityEX9000_ultEwrap_string__u12 ###
+          node_list.append FAcache[start_pos][42]
+          ### rule_Hstring_literal_singleq_priorityEX9000_ultEvalue__u13 ###
+          node_list.append FAcache[start_pos][44]
+          ### rule_Hstring_literal_doubleq_priorityEX9000_ultEvalue__u14 ###
+          node_list.append FAcache[start_pos][46]
+          ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityXHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_u15 ###
+          node_list.append FAcache[start_pos][48]
+          ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16 ###
+          node_list.append FAcache[start_pos][50]
+          ### rule_Hpre_op_Hrvalue_priorityEHpre_opXpriority_ultEpre_op_HrvalueX1XXpriorityXEHpre_opXpriority_u17 ###
+          node_list.append FAcache[start_pos][52]
+          ### rule_XX_Hrvalue_XX_priorityEX9000_ultEbra__u18 ###
+          node_list.append FAcache[start_pos][54]
+          ### rule_Haccess_rvalue_XX_Hnumber_XX_Hnumber_XX_priorityEX9000_ultEslice_access__u20 ###
+          node_list.append FAcache[start_pos][56]
+          ### rule_Haccess_rvalue_XX_Hid_priorityEX9000_ultEfield_access__u21 ###
+          node_list.append FAcache[start_pos][58]
+          for node in node_list
+            node._is_new = true
+          if append_list = FAcache[start_pos][6]
+            for node in append_list
+              node._is_new = false
+            append_list.uappend node_list
+          else
+            FAcache[start_pos][6] = node_list
+          if FAdrop[start_pos][6]
+            if node_list.last()?._is_new
+              # recursive case
+              stack.push [
+                60
+                start_pos
+                1
+              ]
+              ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityXHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_u15 ###
+              stack.push [
+                48
+                start_pos
+                1
+              ]
+              ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16 ###
+              stack.push [
+                50
+                start_pos
+                1
+              ]
+              ### rule_XX_Hrvalue_XX_priorityEX9000_ultEbra__u18 ###
+              stack.push [
+                54
+                start_pos
+                1
+              ]
+        
+        when 7
+          ### token_number queue ###
+          
+          stack.push [
+            61
+            start_pos
+            0
+          ]
+        when 61
+          ### token_number collect ###
+          node_list = []
+          
+          FAcache[start_pos][7] = node_list
+        
+        when 8
+          ### token_id queue ###
+          
+          stack.push [
+            62
+            start_pos
+            0
+          ]
+        when 62
+          ### token_id collect ###
+          node_list = []
+          
+          FAcache[start_pos][8] = node_list
+        
+        when 9
+          ### token_string_literal_singleq queue ###
+          
+          stack.push [
+            63
+            start_pos
+            0
+          ]
+        when 63
+          ### token_string_literal_singleq collect ###
+          node_list = []
+          
+          FAcache[start_pos][9] = node_list
+        
+        when 10
+          ### token_string_literal_doubleq queue ###
+          
+          stack.push [
+            64
+            start_pos
+            0
+          ]
+        when 64
+          ### token_string_literal_doubleq collect ###
+          node_list = []
+          
+          FAcache[start_pos][10] = node_list
+        
+        when 11
+          ### token_strict_rule queue ###
+          
+          stack.push [
+            67
+            start_pos
+            0
+          ]
+          ### rule_Hrvalue_ultEdeep__u22 ###
+          stack.push [
+            65
+            start_pos
+            0
+          ]
+        when 67
+          ### token_strict_rule collect ###
+          node_list = []
+          ### rule_Hrvalue_ultEdeep__u22 ###
+          node_list.append FAcache[start_pos][65]
+          FAcache[start_pos][11] = node_list
+        
+        when 13
+          ### rule_XX_priorityE1__u1 queue ###
+          chk_len = stack.push [
+            13
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 14
+        when 14
+          ### rule_XX_priorityE1__u1 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != "!"
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_XX_priorityE1__u1"
+            
+            mx_hash_stub.hash_key = "pre_op"
+            mx_hash_stub.hash_key_idx = 1
+            mx_hash_stub["priority"] = 1
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.pop()
+          FAcache[start_pos][13] = ret_list
+        when 15
+          ### rule_XX_priorityE1__u2 queue ###
+          chk_len = stack.push [
+            15
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 16
+        when 16
+          ### rule_XX_priorityE1__u2 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != "-"
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_XX_priorityE1__u2"
+            
+            mx_hash_stub.hash_key = "pre_op"
+            mx_hash_stub.hash_key_idx = 1
+            mx_hash_stub["priority"] = 1
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.pop()
+          FAcache[start_pos][15] = ret_list
+        when 17
+          ### rule_XP_priorityE1__u3 queue ###
+          chk_len = stack.push [
+            17
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 18
+        when 18
+          ### rule_XP_priorityE1__u3 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != "+"
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_XP_priorityE1__u3"
+            
+            mx_hash_stub.hash_key = "pre_op"
+            mx_hash_stub.hash_key_idx = 1
+            mx_hash_stub["priority"] = 1
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.pop()
+          FAcache[start_pos][17] = ret_list
+        when 20
+          ### rule_XSXXX_priorityE5__right_assocE1__u4 queue ###
+          chk_len = stack.push [
+            20
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 21
+        when 21
+          ### rule_XSXXX_priorityE5__right_assocE1__u4 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          hyp_list_1 = []
+          old_node = node
+          node = @proxy
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != "*"
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != "/"
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          node = old_node
+          
+          for tok_list in hyp_list_1
+            node.value_array.append tok_list
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_XSXXX_priorityE5__right_assocE1__u4"
+            
+            mx_hash_stub.hash_key = "bin_op"
+            mx_hash_stub.hash_key_idx = 2
+            mx_hash_stub["priority"] = 5
+            mx_hash_stub["right_assoc"] = 1
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.length -= tok_list.length
+          FAcache[start_pos][20] = ret_list
+        when 22
+          ### rule_XPXXX_priorityE6__right_assocE1__u5 queue ###
+          chk_len = stack.push [
+            22
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 23
+        when 23
+          ### rule_XPXXX_priorityE6__right_assocE1__u5 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          hyp_list_1 = []
+          old_node = node
+          node = @proxy
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != "+"
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != "-"
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          node = old_node
+          
+          for tok_list in hyp_list_1
+            node.value_array.append tok_list
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_XPXXX_priorityE6__right_assocE1__u5"
+            
+            mx_hash_stub.hash_key = "bin_op"
+            mx_hash_stub.hash_key_idx = 2
+            mx_hash_stub["priority"] = 6
+            mx_hash_stub["right_assoc"] = 1
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.length -= tok_list.length
+          FAcache[start_pos][22] = ret_list
+        when 24
+          ### rule_XXXXXXEXXXXXXXXEXXXXEXXXXXXXXEEX_priorityE9__u6 queue ###
+          chk_len = stack.push [
+            24
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 25
+        when 25
+          ### rule_XXXXXXEXXXXXXXXEXXXXEXXXXXXXXEEX_priorityE9__u6 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          hyp_list_1 = []
+          old_node = node
+          node = @proxy
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '<'
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '<='
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '>'
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '>='
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '!='
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '<>'
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '=='
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          node = old_node
+          
+          for tok_list in hyp_list_1
+            node.value_array.append tok_list
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_XXXXXXEXXXXXXXXEXXXXEXXXXXXXXEEX_priorityE9__u6"
+            
+            mx_hash_stub.hash_key = "bin_op"
+            mx_hash_stub.hash_key_idx = 2
+            mx_hash_stub["priority"] = 9
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.length -= tok_list.length
+          FAcache[start_pos][24] = ret_list
+        when 26
+          ### rule_XXXXXXXXXXXXXXXXX_priorityE10_right_assocE1__u7 queue ###
+          chk_len = stack.push [
+            26
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 27
+        when 27
+          ### rule_XXXXXXXXXXXXXXXXX_priorityE10_right_assocE1__u7 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          hyp_list_1 = []
+          old_node = node
+          node = @proxy
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '&'
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '&&'
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '|'
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '||'
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          node = old_node
+          
+          for tok_list in hyp_list_1
+            node.value_array.append tok_list
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_XXXXXXXXXXXXXXXXX_priorityE10_right_assocE1__u7"
+            
+            mx_hash_stub.hash_key = "bin_op"
+            mx_hash_stub.hash_key_idx = 2
+            mx_hash_stub["priority"] = 10
+            mx_hash_stub["right_assoc"] = 1
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.length -= tok_list.length
+          FAcache[start_pos][26] = ret_list
+        when 29
+          ### rule_Hdollar_id_priorityEX9000_ultEdollar_id__u8 queue ###
+          chk_len = stack.push [
+            29
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][4]
+          if !list_1
+            stack.push [
+              4
+              b_0
+              0
+            ]
+            continue
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 30
+        when 30
+          ### rule_Hdollar_id_priorityEX9000_ultEdollar_id__u8 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][4]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_Hdollar_id_priorityEX9000_ultEdollar_id__u8"
+            
+            mx_hash_stub.hash_key = "access_rvalue"
+            mx_hash_stub.hash_key_idx = 3
+            mx_hash_stub["priority"] = -9000
+            mx_hash_stub["ult"] = "dollar_id"
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.pop()
+          FAcache[start_pos][29] = ret_list
+        when 31
+          ### rule_Hhash_id_priorityEX9000_ultEhash_id__u9 queue ###
+          chk_len = stack.push [
+            31
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][5]
+          if !list_1
+            stack.push [
+              5
+              b_0
+              0
+            ]
+            continue
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 32
+        when 32
+          ### rule_Hhash_id_priorityEX9000_ultEhash_id__u9 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][5]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_Hhash_id_priorityEX9000_ultEhash_id__u9"
+            
+            mx_hash_stub.hash_key = "access_rvalue"
+            mx_hash_stub.hash_key_idx = 3
+            mx_hash_stub["priority"] = -9000
+            mx_hash_stub["ult"] = "hash_id"
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.pop()
+          FAcache[start_pos][31] = ret_list
+        when 33
+          ### rule_Hhash_id_XX_Hnumber_XX_priorityEX9000_ultEhash_array_access__u19 queue ###
+          chk_len = stack.push [
+            33
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][5]
+          if !list_1
+            stack.push [
+              5
+              b_0
+              0
+            ]
+            continue
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            # node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][0]
+            for tok in list_2
+              continue if tok.value != "["
+              b_2 = tok.b
+              # node.value_array.push tok
+              
+              continue if b_2 >= length
+              list_3 = FAcache[b_2][7]
+              if !list_3
+                stack.push [
+                  7
+                  b_2
+                  0
+                ]
+                continue
+              
+              
+              # node.value_array.pop()
+            
+            # node.value_array.pop()
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 34
+        when 34
+          ### rule_Hhash_id_XX_Hnumber_XX_priorityEX9000_ultEhash_array_access__u19 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][5]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][0]
+            for tok in list_2
+              continue if tok.value != "["
+              b_2 = tok.b
+              node.value_array.push tok
+              
+              continue if b_2 >= length
+              list_3 = FAcache[b_2][7]
+              for tok in list_3
+                
+                b_3 = tok.b
+                node.value_array.push tok
+                
+                continue if b_3 >= length
+                list_4 = FAcache[b_3][0]
+                for tok in list_4
+                  continue if tok.value != "]"
+                  b_4 = tok.b
+                  node.value_array.push tok
+                  
+                  arg_list = node.value_array
+                  
+                  
+                  mx_hash_stub = node.mx_hash = {}
+                  mx_hash_stub.rule = "rule_Hhash_id_XX_Hnumber_XX_priorityEX9000_ultEhash_array_access__u19"
+                  
+                  mx_hash_stub.hash_key = "access_rvalue"
+                  mx_hash_stub.hash_key_idx = 3
+                  mx_hash_stub["priority"] = -9000
+                  mx_hash_stub["ult"] = "hash_array_access"
+                  
+                  node.b = node.value_array.last().b
+                  
+                  ret_list.push node.clone()
+                  
+                  
+                  node.value_array.pop()
+                
+                node.value_array.pop()
+              
+              node.value_array.pop()
+            
+            node.value_array.pop()
+          FAcache[start_pos][33] = ret_list
+        when 38
+          ### rule_Haccess_rvalue_priorityEX9000_ultEaccess_rvalue__u10 queue ###
+          chk_len = stack.push [
+            38
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][3]
+          if !list_1
+            stack.push [
+              3
+              b_0
+              0
+            ]
+            continue
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 39
+        when 39
+          ### rule_Haccess_rvalue_priorityEX9000_ultEaccess_rvalue__u10 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][3]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_Haccess_rvalue_priorityEX9000_ultEaccess_rvalue__u10"
+            
+            mx_hash_stub.hash_key = "rvalue"
+            mx_hash_stub.hash_key_idx = 6
+            mx_hash_stub["priority"] = -9000
+            mx_hash_stub["ult"] = "access_rvalue"
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.pop()
+          FAcache[start_pos][38] = ret_list
+        when 40
+          ### rule_Hnumber_priorityEX9000_ultEvalue__u11 queue ###
+          chk_len = stack.push [
+            40
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][7]
+          if !list_1
+            stack.push [
+              7
+              b_0
+              0
+            ]
+            continue
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 41
+        when 41
+          ### rule_Hnumber_priorityEX9000_ultEvalue__u11 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][7]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_Hnumber_priorityEX9000_ultEvalue__u11"
+            
+            mx_hash_stub.hash_key = "rvalue"
+            mx_hash_stub.hash_key_idx = 6
+            mx_hash_stub["priority"] = -9000
+            mx_hash_stub["ult"] = "value"
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.pop()
+          FAcache[start_pos][40] = ret_list
+        when 42
+          ### rule_Hid_priorityEX9000_ultEwrap_string__u12 queue ###
+          chk_len = stack.push [
+            42
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][8]
+          if !list_1
+            stack.push [
+              8
+              b_0
+              0
+            ]
+            continue
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 43
+        when 43
+          ### rule_Hid_priorityEX9000_ultEwrap_string__u12 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][8]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_Hid_priorityEX9000_ultEwrap_string__u12"
+            
+            mx_hash_stub.hash_key = "rvalue"
+            mx_hash_stub.hash_key_idx = 6
+            mx_hash_stub["priority"] = -9000
+            mx_hash_stub["ult"] = "wrap_string"
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.pop()
+          FAcache[start_pos][42] = ret_list
+        when 44
+          ### rule_Hstring_literal_singleq_priorityEX9000_ultEvalue__u13 queue ###
+          chk_len = stack.push [
+            44
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][9]
+          if !list_1
+            stack.push [
+              9
+              b_0
+              0
+            ]
+            continue
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 45
+        when 45
+          ### rule_Hstring_literal_singleq_priorityEX9000_ultEvalue__u13 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][9]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_Hstring_literal_singleq_priorityEX9000_ultEvalue__u13"
+            
+            mx_hash_stub.hash_key = "rvalue"
+            mx_hash_stub.hash_key_idx = 6
+            mx_hash_stub["priority"] = -9000
+            mx_hash_stub["ult"] = "value"
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.pop()
+          FAcache[start_pos][44] = ret_list
+        when 46
+          ### rule_Hstring_literal_doubleq_priorityEX9000_ultEvalue__u14 queue ###
+          chk_len = stack.push [
+            46
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][10]
+          if !list_1
+            stack.push [
+              10
+              b_0
+              0
+            ]
+            continue
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 47
+        when 47
+          ### rule_Hstring_literal_doubleq_priorityEX9000_ultEvalue__u14 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][10]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_Hstring_literal_doubleq_priorityEX9000_ultEvalue__u14"
+            
+            mx_hash_stub.hash_key = "rvalue"
+            mx_hash_stub.hash_key_idx = 6
+            mx_hash_stub["priority"] = -9000
+            mx_hash_stub["ult"] = "value"
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.pop()
+          FAcache[start_pos][46] = ret_list
+        when 48
+          ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityXHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_u15 queue ###
+          chk_len = stack.push [
+            48
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][6]
+          if !list_1
+            stack.push [
+              6
+              b_0
+              0
+            ]
+            continue
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            # node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][2]
+            if !list_2
+              stack.push [
+                2
+                b_1
+                0
+              ]
+              continue
+            for tok in list_2
+              
+              b_2 = tok.b
+              # node.value_array.push tok
+              
+              continue if b_2 >= length
+              list_3 = FAcache[b_2][6]
+              if !list_3
+                stack.push [
+                  6
+                  b_2
+                  0
+                ]
+                continue
+              
+              
+              # node.value_array.pop()
+            
+            # node.value_array.pop()
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 49
+        when 49
+          ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityXHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_u15 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][6]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][2]
+            for tok in list_2
+              
+              b_2 = tok.b
+              node.value_array.push tok
+              
+              continue if b_2 >= length
+              list_3 = FAcache[b_2][6]
+              for tok in list_3
+                
+                b_3 = tok.b
+                node.value_array.push tok
+                
+                arg_list = node.value_array
+                if !((arg_list[0].mx_hash.priority<arg_list[1].mx_hash.priority))
+                  node.value_array.pop()
+                  continue
+                if !((arg_list[2].mx_hash.priority<arg_list[1].mx_hash.priority))
+                  node.value_array.pop()
+                  continue
+                
+                mx_hash_stub = node.mx_hash = {}
+                mx_hash_stub.rule = "rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityXHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_u15"
+                
+                mx_hash_stub.hash_key = "rvalue"
+                mx_hash_stub.hash_key_idx = 6
+                mx_hash_stub["priority"] = arg_list[1].mx_hash.priority
+                mx_hash_stub["ult"] = "bin_op"
+                
+                node.b = node.value_array.last().b
+                
+                ret_list.push node.clone()
+                
+                
+                node.value_array.pop()
+              
+              node.value_array.pop()
+            
+            node.value_array.pop()
+          FAcache[start_pos][48] = ret_list
+        when 50
+          ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16 queue ###
+          chk_len = stack.push [
+            50
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][6]
+          if !list_1
+            stack.push [
+              6
+              b_0
+              0
+            ]
+            continue
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            # node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][2]
+            if !list_2
+              stack.push [
+                2
+                b_1
+                0
+              ]
+              continue
+            for tok in list_2
+              
+              b_2 = tok.b
+              # node.value_array.push tok
+              
+              continue if b_2 >= length
+              list_3 = FAcache[b_2][6]
+              if !list_3
+                stack.push [
+                  6
+                  b_2
+                  0
+                ]
+                continue
+              
+              
+              # node.value_array.pop()
+            
+            # node.value_array.pop()
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 51
+        when 51
+          ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][6]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][2]
+            for tok in list_2
+              
+              b_2 = tok.b
+              node.value_array.push tok
+              
+              continue if b_2 >= length
+              list_3 = FAcache[b_2][6]
+              for tok in list_3
+                
+                b_3 = tok.b
+                node.value_array.push tok
+                
+                arg_list = node.value_array
+                if !((arg_list[0].mx_hash.priority==arg_list[1].mx_hash.priority))
+                  node.value_array.pop()
+                  continue
+                if !((arg_list[2].mx_hash.priority<arg_list[1].mx_hash.priority))
+                  node.value_array.pop()
+                  continue
+                if !(arg_list[1].mx_hash.right_assoc)
+                  node.value_array.pop()
+                  continue
+                
+                mx_hash_stub = node.mx_hash = {}
+                mx_hash_stub.rule = "rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16"
+                
+                mx_hash_stub.hash_key = "rvalue"
+                mx_hash_stub.hash_key_idx = 6
+                mx_hash_stub["priority"] = arg_list[1].mx_hash.priority
+                mx_hash_stub["ult"] = "bin_op"
+                
+                node.b = node.value_array.last().b
+                
+                ret_list.push node.clone()
+                
+                
+                node.value_array.pop()
+              
+              node.value_array.pop()
+            
+            node.value_array.pop()
+          FAcache[start_pos][50] = ret_list
+        when 52
+          ### rule_Hpre_op_Hrvalue_priorityEHpre_opXpriority_ultEpre_op_HrvalueX1XXpriorityXEHpre_opXpriority_u17 queue ###
+          chk_len = stack.push [
+            52
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][1]
+          if !list_1
+            stack.push [
+              1
+              b_0
+              0
+            ]
+            continue
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            # node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][6]
+            if !list_2
+              stack.push [
+                6
+                b_1
+                0
+              ]
+              continue
+            
+            
+            # node.value_array.pop()
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 53
+        when 53
+          ### rule_Hpre_op_Hrvalue_priorityEHpre_opXpriority_ultEpre_op_HrvalueX1XXpriorityXEHpre_opXpriority_u17 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][1]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][6]
+            for tok in list_2
+              
+              b_2 = tok.b
+              node.value_array.push tok
+              
+              arg_list = node.value_array
+              if !((arg_list[1].mx_hash.priority<=arg_list[0].mx_hash.priority))
+                node.value_array.pop()
+                continue
+              
+              mx_hash_stub = node.mx_hash = {}
+              mx_hash_stub.rule = "rule_Hpre_op_Hrvalue_priorityEHpre_opXpriority_ultEpre_op_HrvalueX1XXpriorityXEHpre_opXpriority_u17"
+              
+              mx_hash_stub.hash_key = "rvalue"
+              mx_hash_stub.hash_key_idx = 6
+              mx_hash_stub["priority"] = arg_list[0].mx_hash.priority
+              mx_hash_stub["ult"] = "pre_op"
+              
+              node.b = node.value_array.last().b
+              
+              ret_list.push node.clone()
+              
+              
+              node.value_array.pop()
+            
+            node.value_array.pop()
+          FAcache[start_pos][52] = ret_list
+        when 54
+          ### rule_XX_Hrvalue_XX_priorityEX9000_ultEbra__u18 queue ###
+          chk_len = stack.push [
+            54
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != "("
+            b_1 = tok.b
+            # node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][6]
+            if !list_2
+              stack.push [
+                6
+                b_1
+                0
+              ]
+              continue
+            
+            
+            # node.value_array.pop()
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 55
+        when 55
+          ### rule_XX_Hrvalue_XX_priorityEX9000_ultEbra__u18 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != "("
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][6]
+            for tok in list_2
+              
+              b_2 = tok.b
+              node.value_array.push tok
+              
+              continue if b_2 >= length
+              list_3 = FAcache[b_2][0]
+              for tok in list_3
+                continue if tok.value != ")"
+                b_3 = tok.b
+                node.value_array.push tok
+                
+                arg_list = node.value_array
+                
+                
+                mx_hash_stub = node.mx_hash = {}
+                mx_hash_stub.rule = "rule_XX_Hrvalue_XX_priorityEX9000_ultEbra__u18"
+                
+                mx_hash_stub.hash_key = "rvalue"
+                mx_hash_stub.hash_key_idx = 6
+                mx_hash_stub["priority"] = -9000
+                mx_hash_stub["ult"] = "bra"
+                
+                node.b = node.value_array.last().b
+                
+                ret_list.push node.clone()
+                
+                
+                node.value_array.pop()
+              
+              node.value_array.pop()
+            
+            node.value_array.pop()
+          FAcache[start_pos][54] = ret_list
+        when 56
+          ### rule_Haccess_rvalue_XX_Hnumber_XX_Hnumber_XX_priorityEX9000_ultEslice_access__u20 queue ###
+          chk_len = stack.push [
+            56
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][3]
+          if !list_1
+            stack.push [
+              3
+              b_0
+              0
+            ]
+            continue
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            # node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][0]
+            for tok in list_2
+              continue if tok.value != "["
+              b_2 = tok.b
+              # node.value_array.push tok
+              
+              continue if b_2 >= length
+              list_3 = FAcache[b_2][7]
+              if !list_3
+                stack.push [
+                  7
+                  b_2
+                  0
+                ]
+                continue
+              for tok in list_3
+                
+                b_3 = tok.b
+                # node.value_array.push tok
+                
+                continue if b_3 >= length
+                list_4 = FAcache[b_3][0]
+                for tok in list_4
+                  continue if tok.value != ":"
+                  b_4 = tok.b
+                  # node.value_array.push tok
+                  
+                  continue if b_4 >= length
+                  list_5 = FAcache[b_4][7]
+                  if !list_5
+                    stack.push [
+                      7
+                      b_4
+                      0
+                    ]
+                    continue
+                  
+                  
+                  # node.value_array.pop()
+                
+                # node.value_array.pop()
+              
+              # node.value_array.pop()
+            
+            # node.value_array.pop()
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 57
+        when 57
+          ### rule_Haccess_rvalue_XX_Hnumber_XX_Hnumber_XX_priorityEX9000_ultEslice_access__u20 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][3]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][0]
+            for tok in list_2
+              continue if tok.value != "["
+              b_2 = tok.b
+              node.value_array.push tok
+              
+              continue if b_2 >= length
+              list_3 = FAcache[b_2][7]
+              for tok in list_3
+                
+                b_3 = tok.b
+                node.value_array.push tok
+                
+                continue if b_3 >= length
+                list_4 = FAcache[b_3][0]
+                for tok in list_4
+                  continue if tok.value != ":"
+                  b_4 = tok.b
+                  node.value_array.push tok
+                  
+                  continue if b_4 >= length
+                  list_5 = FAcache[b_4][7]
+                  for tok in list_5
+                    
+                    b_5 = tok.b
+                    node.value_array.push tok
+                    
+                    continue if b_5 >= length
+                    list_6 = FAcache[b_5][0]
+                    for tok in list_6
+                      continue if tok.value != "]"
+                      b_6 = tok.b
+                      node.value_array.push tok
+                      
+                      arg_list = node.value_array
+                      
+                      
+                      mx_hash_stub = node.mx_hash = {}
+                      mx_hash_stub.rule = "rule_Haccess_rvalue_XX_Hnumber_XX_Hnumber_XX_priorityEX9000_ultEslice_access__u20"
+                      
+                      mx_hash_stub.hash_key = "rvalue"
+                      mx_hash_stub.hash_key_idx = 6
+                      mx_hash_stub["priority"] = -9000
+                      mx_hash_stub["ult"] = "slice_access"
+                      
+                      node.b = node.value_array.last().b
+                      
+                      ret_list.push node.clone()
+                      
+                      
+                      node.value_array.pop()
+                    
+                    node.value_array.pop()
+                  
+                  node.value_array.pop()
+                
+                node.value_array.pop()
+              
+              node.value_array.pop()
+            
+            node.value_array.pop()
+          FAcache[start_pos][56] = ret_list
+        when 58
+          ### rule_Haccess_rvalue_XX_Hid_priorityEX9000_ultEfield_access__u21 queue ###
+          chk_len = stack.push [
+            58
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][3]
+          if !list_1
+            stack.push [
+              3
+              b_0
+              0
+            ]
+            continue
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            # node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][0]
+            for tok in list_2
+              continue if tok.value != "."
+              b_2 = tok.b
+              # node.value_array.push tok
+              
+              continue if b_2 >= length
+              list_3 = FAcache[b_2][8]
+              if !list_3
+                stack.push [
+                  8
+                  b_2
+                  0
+                ]
+                continue
+              
+              
+              # node.value_array.pop()
+            
+            # node.value_array.pop()
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 59
+        when 59
+          ### rule_Haccess_rvalue_XX_Hid_priorityEX9000_ultEfield_access__u21 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][3]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][0]
+            for tok in list_2
+              continue if tok.value != "."
+              b_2 = tok.b
+              node.value_array.push tok
+              
+              continue if b_2 >= length
+              list_3 = FAcache[b_2][8]
+              for tok in list_3
+                
+                b_3 = tok.b
+                node.value_array.push tok
+                
+                arg_list = node.value_array
+                
+                
+                mx_hash_stub = node.mx_hash = {}
+                mx_hash_stub.rule = "rule_Haccess_rvalue_XX_Hid_priorityEX9000_ultEfield_access__u21"
+                
+                mx_hash_stub.hash_key = "rvalue"
+                mx_hash_stub.hash_key_idx = 6
+                mx_hash_stub["priority"] = -9000
+                mx_hash_stub["ult"] = "field_access"
+                
+                node.b = node.value_array.last().b
+                
+                ret_list.push node.clone()
+                
+                
+                node.value_array.pop()
+              
+              node.value_array.pop()
+            
+            node.value_array.pop()
+          FAcache[start_pos][58] = ret_list
+        when 65
+          ### rule_Hrvalue_ultEdeep__u22 queue ###
+          chk_len = stack.push [
+            65
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][6]
+          if !list_1
+            stack.push [
+              6
+              b_0
+              0
+            ]
+            continue
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 66
+        when 66
+          ### rule_Hrvalue_ultEdeep__u22 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][6]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_Hrvalue_ultEdeep__u22"
+            
+            mx_hash_stub.hash_key = "strict_rule"
+            mx_hash_stub.hash_key_idx = 11
+            mx_hash_stub["ult"] = "deep"
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.pop()
+          FAcache[start_pos][65] = ret_list
+    
+    FAcache[start_pos][11]
 
 # ###################################################################################################
 parser = new module.Parser

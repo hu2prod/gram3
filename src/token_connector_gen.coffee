@@ -24,34 +24,10 @@ tokenizer.parser_list.push (new Token_parser 'escape_token', /^\\\S/ )
 # ###################################################################################################
 
 require 'fy'
-{Node} = require "./node"
-class Hypothesis
-  a : 0
-  b : 0
-  list : []
-  _is_new : false
-  constructor : ()->
-    @list = []
-  
-  clone : ()->
-    ret = new Hypothesis
-    ret.a = @a
-    ret.b = @b
-    ret.list = @list.clone()
-    ret._is_new = @_is_new
-    ret
-  
-  push   : (proxy_node)->
-    @list.push proxy_node
-    @b = proxy_node.token.b
-    if @list.length == 1
-      @_is_new = proxy_node.token._is_new
-    return
-  
 drop_stub = []
 for i in [0 ... 14]
-  drop_stub.push -1
-cache_stub = new Array 14
+  drop_stub.push 0
+cache_stub = new Array 52
 
 hash_key_list = [
   "_",
@@ -71,13 +47,19 @@ hash_key_list = [
 ]
 
 class @Parser
-  cache     : []
-  drop      : []
-  constructor : ()->
+  length: 0
+  cache : []
+  drop  : []
+  Node  : null
+  proxy : null
   
   go : (token_list_list)->
-    @cache = []
-    @drop  = []
+    @cache= []
+    @drop = []
+    @length = token_list_list.length
+    return [] if @length == 0
+    @Node = token_list_list[0]?[0]?.constructor
+    @proxy= new @Node
     for token_list,idx in token_list_list
       stub = cache_stub.slice()
       for token in token_list
@@ -89,870 +71,1214 @@ class @Parser
       @cache.push stub
       @drop.push drop_stub.slice()
     
-    list = @token_stmt(0)
+    list = @fsm()
     max_token = token_list_list.length
     
     filter_list = []
     for v in list
-      filter_list.push v if v.b == max_token
-    # Прим. А все ошибки, почему не прошло ... смотрим и анализируем @cache и @drop
+      if v.b == max_token
+        @node_fix v
+        filter_list.push v
+    # Прим. А все ошибки, почему не прошло ... смотрим и анализируем @cache
     filter_list
   
-  token__ : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][0]
-    
-    node_list = []
-    
-    
-    FAcache = @cache[start_pos][0] = node_list
-    
-    return FAcache
-  
-  token_atom : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][1]
-    
-    node_list = []
-    node_list.append @rule_Hq_token_ultEconst__u1 start_pos
-    node_list.append @rule_Htoken_ultEconst__u2 start_pos
-    node_list.append @rule_Hescape_token_ultEconst__u3 start_pos
-    node_list.append @rule_Hhash_id_ultEref__u4 start_pos
-    node_list.append @rule_Hbra_op_Hstmt_Hbra_cl_ultEbra__u10 start_pos
-    
-    FAcache = @cache[start_pos][1] = node_list
-    
-    return FAcache
-  
-  token_q_token : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][2]
-    
-    node_list = []
-    
-    
-    FAcache = @cache[start_pos][2] = node_list
-    
-    return FAcache
-  
-  token_token : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][3]
-    
-    node_list = []
-    
-    
-    FAcache = @cache[start_pos][3] = node_list
-    
-    return FAcache
-  
-  token_escape_token : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][4]
-    
-    node_list = []
-    
-    
-    FAcache = @cache[start_pos][4] = node_list
-    
-    return FAcache
-  
-  token_hash_id : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][5]
-    
-    node_list = []
-    
-    
-    FAcache = @cache[start_pos][5] = node_list
-    
-    return FAcache
-  
-  token_expr : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][6]
-    
-    node_list = []
-    node_list.append @rule_Hatom_ultEpass__u5 start_pos
-    node_list.append @rule_Hatom_Hor_Hexpr_ultEor__u6 start_pos
-    
-    FAcache = @cache[start_pos][6] = node_list
-    
-    return FAcache
-  
-  token_or : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][7]
-    
-    node_list = []
-    
-    
-    FAcache = @cache[start_pos][7] = node_list
-    
-    return FAcache
-  
-  token_stmt : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][8]
-    
-    node_list = []
-    node_list.append @rule_Hatom_Hoption_ultEoption__u7 start_pos
-    node_list.append @rule_Hatom_Hplus_ultEplus__u8 start_pos
-    node_list.append @rule_Hatom_Hstar_ultEstar__u9 start_pos
-    node_list.append @rule_Hexpr_ultEpass__u11 start_pos
-    node_list.append @rule_Hexpr_Hstmt_ultEjoin__u12 start_pos
-    
-    FAcache = @cache[start_pos][8] = node_list
-    
-    return FAcache
-  
-  token_option : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][9]
-    
-    node_list = []
-    
-    
-    FAcache = @cache[start_pos][9] = node_list
-    
-    return FAcache
-  
-  token_plus : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][10]
-    
-    node_list = []
-    
-    
-    FAcache = @cache[start_pos][10] = node_list
-    
-    return FAcache
-  
-  token_star : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][11]
-    
-    node_list = []
-    
-    
-    FAcache = @cache[start_pos][11] = node_list
-    
-    return FAcache
-  
-  token_bra_op : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][12]
-    
-    node_list = []
-    
-    
-    FAcache = @cache[start_pos][12] = node_list
-    
-    return FAcache
-  
-  token_bra_cl : (start_pos)->
-    if start_pos >= @cache.length
-      ### !pragma coverage-skip-block ###
-      return []
-    return ret if ret = @cache[start_pos][13]
-    
-    node_list = []
-    
-    
-    FAcache = @cache[start_pos][13] = node_list
-    
-    return FAcache
-  
-  # rule("atom", "#q_token")                          .mx("ult=const")
-  rule_Hq_token_ultEconst__u1 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_q_token hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_Hq_token_ultEconst__u1"
+  node_fix : (node)->
+    walk = (node)->
       vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
+      for v in node.value_array
+        walk v
+        vv_list.push v.value_view or v.value
       node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "atom"
-      mx_hash_stub.hash_key_idx = 1
-      mx_hash_stub["ult"] = "const"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("atom", "#token")                            .mx("ult=const")
-  rule_Htoken_ultEconst__u2 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_token hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_Htoken_ultEconst__u2"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "atom"
-      mx_hash_stub.hash_key_idx = 1
-      mx_hash_stub["ult"] = "const"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("atom", "#escape_token")                     .mx("ult=const")
-  rule_Hescape_token_ultEconst__u3 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_escape_token hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_Hescape_token_ultEconst__u3"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "atom"
-      mx_hash_stub.hash_key_idx = 1
-      mx_hash_stub["ult"] = "const"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("atom", "#hash_id")                          .mx("ult=ref")
-  rule_Hhash_id_ultEref__u4 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_hash_id hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_Hhash_id_ultEref__u4"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "atom"
-      mx_hash_stub.hash_key_idx = 1
-      mx_hash_stub["ult"] = "ref"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("atom", "#bra_op #stmt #bra_cl")             .mx("ult=bra")
-  rule_Hbra_op_Hstmt_Hbra_cl_ultEbra__u10 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_bra_op hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_stmt hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_bra_cl hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_Hbra_op_Hstmt_Hbra_cl_ultEbra__u10"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "atom"
-      mx_hash_stub.hash_key_idx = 1
-      mx_hash_stub["ult"] = "bra"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("expr", "#atom")                             .mx("ult=pass")
-  rule_Hatom_ultEpass__u5 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_atom hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_Hatom_ultEpass__u5"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "expr"
-      mx_hash_stub.hash_key_idx = 6
-      mx_hash_stub["ult"] = "pass"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("expr", "#atom #or #expr")                   .mx("ult=or")
-  rule_Hatom_Hor_Hexpr_ultEor__u6 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_atom hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_or hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_expr hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_Hatom_Hor_Hexpr_ultEor__u6"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "expr"
-      mx_hash_stub.hash_key_idx = 6
-      mx_hash_stub["ult"] = "or"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("stmt", "#atom #option")                     .mx("ult=option")
-  rule_Hatom_Hoption_ultEoption__u7 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_atom hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_option hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_Hatom_Hoption_ultEoption__u7"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "stmt"
-      mx_hash_stub.hash_key_idx = 8
-      mx_hash_stub["ult"] = "option"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("stmt", "#atom #plus")                       .mx("ult=plus")
-  rule_Hatom_Hplus_ultEplus__u8 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_atom hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_plus hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_Hatom_Hplus_ultEplus__u8"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "stmt"
-      mx_hash_stub.hash_key_idx = 8
-      mx_hash_stub["ult"] = "plus"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("stmt", "#atom #star")                       .mx("ult=star")
-  rule_Hatom_Hstar_ultEstar__u9 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_atom hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_star hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_Hatom_Hstar_ultEstar__u9"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "stmt"
-      mx_hash_stub.hash_key_idx = 8
-      mx_hash_stub["ult"] = "star"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("stmt", "#expr")                             .mx("ult=pass")
-  rule_Hexpr_ultEpass__u11 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_expr hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_Hexpr_ultEpass__u11"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "stmt"
-      mx_hash_stub.hash_key_idx = 8
-      mx_hash_stub["ult"] = "pass"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
-  # rule("stmt", "#expr #stmt")                       .mx("ult=join")
-  rule_Hexpr_Hstmt_ultEjoin__u12 : (start_pos, only_new = false)->
-    group_idx = 1
-    
-    zero_hyp = new Hypothesis
-    zero_hyp.a = start_pos
-    zero_hyp.b = start_pos
-    hyp_list = [zero_hyp.clone()]
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_expr hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    prev_hyp_list = hyp_list
-    hyp_list = []
-    for hyp in prev_hyp_list
-      for append_me in @token_stmt hyp.b
-        hyp_add = hyp.clone()
-        hyp_add.push {
-          token : append_me
-          label : 'TODO_tok_pos'
-        }
-        hyp_list.push hyp_add
-    
-    
-    node_list = []
-    for hyp in hyp_list
-      
-      node = new Node
-      node.mx_hash.rule = "rule_Hexpr_Hstmt_ultEjoin__u12"
-      vv_list = []
-      for obj in hyp.list
-        # TODO obj.label -> hash_pos_idx
-        node.value_array.push obj.token
-        vv_list.push obj.token.value_view or obj.token.value
-      node.value_view = vv_list.join ' '
-      
-      arg_list = node.value_array
-      
-      
-      mx_hash_stub = node.mx_hash
-      mx_hash_stub.hash_key = "stmt"
-      mx_hash_stub.hash_key_idx = 8
-      mx_hash_stub["ult"] = "join"
-      
-      node.a = node.value_array[0].a
-      node.b = node.value_array.last().b
-      
-      node_list.push node
-    
-    return node_list
-  
+      return
+    walk node
+    return
+
+  fsm : ()->
+    FAcache = @cache
+    FAdrop = @drop
+    stack = [
+      [
+        8
+        0
+        0
+      ]
+    ]
+    length = @length
+    
+    while cur = stack.pop()
+      [
+        hki
+        start_pos
+        only_new
+      ] = cur
+      continue if start_pos >= length
+      if !only_new
+        continue if list = FAcache[start_pos][hki]
+      
+      switch hki
+        when 0
+          ### token__ queue ###
+          
+          stack.push [
+            14
+            start_pos
+            0
+          ]
+        when 14
+          ### token__ collect ###
+          node_list = []
+          
+          FAcache[start_pos][0] = node_list
+        
+        when 1
+          ### token_atom queue ###
+          
+          stack.push [
+            25
+            start_pos
+            0
+          ]
+          ### rule_Hq_token_ultEconst__u1 ###
+          stack.push [
+            15
+            start_pos
+            0
+          ]
+          ### rule_Htoken_ultEconst__u2 ###
+          stack.push [
+            17
+            start_pos
+            0
+          ]
+          ### rule_Hescape_token_ultEconst__u3 ###
+          stack.push [
+            19
+            start_pos
+            0
+          ]
+          ### rule_Hhash_id_ultEref__u4 ###
+          stack.push [
+            21
+            start_pos
+            0
+          ]
+          ### rule_Hbra_op_Hstmt_Hbra_cl_ultEbra__u10 ###
+          stack.push [
+            23
+            start_pos
+            0
+          ]
+        when 25
+          ### token_atom collect ###
+          node_list = []
+          ### rule_Hq_token_ultEconst__u1 ###
+          node_list.append FAcache[start_pos][15]
+          ### rule_Htoken_ultEconst__u2 ###
+          node_list.append FAcache[start_pos][17]
+          ### rule_Hescape_token_ultEconst__u3 ###
+          node_list.append FAcache[start_pos][19]
+          ### rule_Hhash_id_ultEref__u4 ###
+          node_list.append FAcache[start_pos][21]
+          ### rule_Hbra_op_Hstmt_Hbra_cl_ultEbra__u10 ###
+          node_list.append FAcache[start_pos][23]
+          FAcache[start_pos][1] = node_list
+        
+        when 2
+          ### token_q_token queue ###
+          
+          stack.push [
+            26
+            start_pos
+            0
+          ]
+        when 26
+          ### token_q_token collect ###
+          node_list = []
+          
+          FAcache[start_pos][2] = node_list
+        
+        when 3
+          ### token_token queue ###
+          
+          stack.push [
+            27
+            start_pos
+            0
+          ]
+        when 27
+          ### token_token collect ###
+          node_list = []
+          
+          FAcache[start_pos][3] = node_list
+        
+        when 4
+          ### token_escape_token queue ###
+          
+          stack.push [
+            28
+            start_pos
+            0
+          ]
+        when 28
+          ### token_escape_token collect ###
+          node_list = []
+          
+          FAcache[start_pos][4] = node_list
+        
+        when 5
+          ### token_hash_id queue ###
+          
+          stack.push [
+            29
+            start_pos
+            0
+          ]
+        when 29
+          ### token_hash_id collect ###
+          node_list = []
+          
+          FAcache[start_pos][5] = node_list
+        
+        when 6
+          ### token_expr queue ###
+          
+          stack.push [
+            34
+            start_pos
+            0
+          ]
+          ### rule_Hatom_ultEpass__u5 ###
+          stack.push [
+            30
+            start_pos
+            0
+          ]
+          ### rule_Hatom_Hor_Hexpr_ultEor__u6 ###
+          stack.push [
+            32
+            start_pos
+            0
+          ]
+        when 34
+          ### token_expr collect ###
+          node_list = []
+          ### rule_Hatom_ultEpass__u5 ###
+          node_list.append FAcache[start_pos][30]
+          ### rule_Hatom_Hor_Hexpr_ultEor__u6 ###
+          node_list.append FAcache[start_pos][32]
+          FAcache[start_pos][6] = node_list
+        
+        when 7
+          ### token_or queue ###
+          
+          stack.push [
+            35
+            start_pos
+            0
+          ]
+        when 35
+          ### token_or collect ###
+          node_list = []
+          
+          FAcache[start_pos][7] = node_list
+        
+        when 8
+          ### token_stmt queue ###
+          
+          stack.push [
+            46
+            start_pos
+            0
+          ]
+          ### rule_Hatom_Hoption_ultEoption__u7 ###
+          stack.push [
+            36
+            start_pos
+            0
+          ]
+          ### rule_Hatom_Hplus_ultEplus__u8 ###
+          stack.push [
+            38
+            start_pos
+            0
+          ]
+          ### rule_Hatom_Hstar_ultEstar__u9 ###
+          stack.push [
+            40
+            start_pos
+            0
+          ]
+          ### rule_Hexpr_ultEpass__u11 ###
+          stack.push [
+            42
+            start_pos
+            0
+          ]
+          ### rule_Hexpr_Hstmt_ultEjoin__u12 ###
+          stack.push [
+            44
+            start_pos
+            0
+          ]
+        when 46
+          ### token_stmt collect ###
+          node_list = []
+          ### rule_Hatom_Hoption_ultEoption__u7 ###
+          node_list.append FAcache[start_pos][36]
+          ### rule_Hatom_Hplus_ultEplus__u8 ###
+          node_list.append FAcache[start_pos][38]
+          ### rule_Hatom_Hstar_ultEstar__u9 ###
+          node_list.append FAcache[start_pos][40]
+          ### rule_Hexpr_ultEpass__u11 ###
+          node_list.append FAcache[start_pos][42]
+          ### rule_Hexpr_Hstmt_ultEjoin__u12 ###
+          node_list.append FAcache[start_pos][44]
+          FAcache[start_pos][8] = node_list
+        
+        when 9
+          ### token_option queue ###
+          
+          stack.push [
+            47
+            start_pos
+            0
+          ]
+        when 47
+          ### token_option collect ###
+          node_list = []
+          
+          FAcache[start_pos][9] = node_list
+        
+        when 10
+          ### token_plus queue ###
+          
+          stack.push [
+            48
+            start_pos
+            0
+          ]
+        when 48
+          ### token_plus collect ###
+          node_list = []
+          
+          FAcache[start_pos][10] = node_list
+        
+        when 11
+          ### token_star queue ###
+          
+          stack.push [
+            49
+            start_pos
+            0
+          ]
+        when 49
+          ### token_star collect ###
+          node_list = []
+          
+          FAcache[start_pos][11] = node_list
+        
+        when 12
+          ### token_bra_op queue ###
+          
+          stack.push [
+            50
+            start_pos
+            0
+          ]
+        when 50
+          ### token_bra_op collect ###
+          node_list = []
+          
+          FAcache[start_pos][12] = node_list
+        
+        when 13
+          ### token_bra_cl queue ###
+          
+          stack.push [
+            51
+            start_pos
+            0
+          ]
+        when 51
+          ### token_bra_cl collect ###
+          node_list = []
+          
+          FAcache[start_pos][13] = node_list
+        
+        when 15
+          ### rule_Hq_token_ultEconst__u1 queue ###
+          chk_len = stack.push [
+            15
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][2]
+          if !list_1
+            stack.push [
+              2
+              b_0
+              0
+            ]
+            continue
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 16
+        when 16
+          ### rule_Hq_token_ultEconst__u1 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][2]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_Hq_token_ultEconst__u1"
+            
+            mx_hash_stub.hash_key = "atom"
+            mx_hash_stub.hash_key_idx = 1
+            mx_hash_stub["ult"] = "const"
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.pop()
+          FAcache[start_pos][15] = ret_list
+        when 17
+          ### rule_Htoken_ultEconst__u2 queue ###
+          chk_len = stack.push [
+            17
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][3]
+          if !list_1
+            stack.push [
+              3
+              b_0
+              0
+            ]
+            continue
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 18
+        when 18
+          ### rule_Htoken_ultEconst__u2 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][3]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_Htoken_ultEconst__u2"
+            
+            mx_hash_stub.hash_key = "atom"
+            mx_hash_stub.hash_key_idx = 1
+            mx_hash_stub["ult"] = "const"
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.pop()
+          FAcache[start_pos][17] = ret_list
+        when 19
+          ### rule_Hescape_token_ultEconst__u3 queue ###
+          chk_len = stack.push [
+            19
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][4]
+          if !list_1
+            stack.push [
+              4
+              b_0
+              0
+            ]
+            continue
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 20
+        when 20
+          ### rule_Hescape_token_ultEconst__u3 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][4]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_Hescape_token_ultEconst__u3"
+            
+            mx_hash_stub.hash_key = "atom"
+            mx_hash_stub.hash_key_idx = 1
+            mx_hash_stub["ult"] = "const"
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.pop()
+          FAcache[start_pos][19] = ret_list
+        when 21
+          ### rule_Hhash_id_ultEref__u4 queue ###
+          chk_len = stack.push [
+            21
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][5]
+          if !list_1
+            stack.push [
+              5
+              b_0
+              0
+            ]
+            continue
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 22
+        when 22
+          ### rule_Hhash_id_ultEref__u4 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][5]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_Hhash_id_ultEref__u4"
+            
+            mx_hash_stub.hash_key = "atom"
+            mx_hash_stub.hash_key_idx = 1
+            mx_hash_stub["ult"] = "ref"
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.pop()
+          FAcache[start_pos][21] = ret_list
+        when 23
+          ### rule_Hbra_op_Hstmt_Hbra_cl_ultEbra__u10 queue ###
+          chk_len = stack.push [
+            23
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][12]
+          if !list_1
+            stack.push [
+              12
+              b_0
+              0
+            ]
+            continue
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            # node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][8]
+            if !list_2
+              stack.push [
+                8
+                b_1
+                0
+              ]
+              continue
+            for tok in list_2
+              
+              b_2 = tok.b
+              # node.value_array.push tok
+              
+              continue if b_2 >= length
+              list_3 = FAcache[b_2][13]
+              if !list_3
+                stack.push [
+                  13
+                  b_2
+                  0
+                ]
+                continue
+              
+              
+              # node.value_array.pop()
+            
+            # node.value_array.pop()
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 24
+        when 24
+          ### rule_Hbra_op_Hstmt_Hbra_cl_ultEbra__u10 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][12]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][8]
+            for tok in list_2
+              
+              b_2 = tok.b
+              node.value_array.push tok
+              
+              continue if b_2 >= length
+              list_3 = FAcache[b_2][13]
+              for tok in list_3
+                
+                b_3 = tok.b
+                node.value_array.push tok
+                
+                arg_list = node.value_array
+                
+                
+                mx_hash_stub = node.mx_hash = {}
+                mx_hash_stub.rule = "rule_Hbra_op_Hstmt_Hbra_cl_ultEbra__u10"
+                
+                mx_hash_stub.hash_key = "atom"
+                mx_hash_stub.hash_key_idx = 1
+                mx_hash_stub["ult"] = "bra"
+                
+                node.b = node.value_array.last().b
+                
+                ret_list.push node.clone()
+                
+                
+                node.value_array.pop()
+              
+              node.value_array.pop()
+            
+            node.value_array.pop()
+          FAcache[start_pos][23] = ret_list
+        when 30
+          ### rule_Hatom_ultEpass__u5 queue ###
+          chk_len = stack.push [
+            30
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][1]
+          if !list_1
+            stack.push [
+              1
+              b_0
+              0
+            ]
+            continue
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 31
+        when 31
+          ### rule_Hatom_ultEpass__u5 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][1]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_Hatom_ultEpass__u5"
+            
+            mx_hash_stub.hash_key = "expr"
+            mx_hash_stub.hash_key_idx = 6
+            mx_hash_stub["ult"] = "pass"
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.pop()
+          FAcache[start_pos][30] = ret_list
+        when 32
+          ### rule_Hatom_Hor_Hexpr_ultEor__u6 queue ###
+          chk_len = stack.push [
+            32
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][1]
+          if !list_1
+            stack.push [
+              1
+              b_0
+              0
+            ]
+            continue
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            # node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][7]
+            if !list_2
+              stack.push [
+                7
+                b_1
+                0
+              ]
+              continue
+            for tok in list_2
+              
+              b_2 = tok.b
+              # node.value_array.push tok
+              
+              continue if b_2 >= length
+              list_3 = FAcache[b_2][6]
+              if !list_3
+                stack.push [
+                  6
+                  b_2
+                  0
+                ]
+                continue
+              
+              
+              # node.value_array.pop()
+            
+            # node.value_array.pop()
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 33
+        when 33
+          ### rule_Hatom_Hor_Hexpr_ultEor__u6 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][1]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][7]
+            for tok in list_2
+              
+              b_2 = tok.b
+              node.value_array.push tok
+              
+              continue if b_2 >= length
+              list_3 = FAcache[b_2][6]
+              for tok in list_3
+                
+                b_3 = tok.b
+                node.value_array.push tok
+                
+                arg_list = node.value_array
+                
+                
+                mx_hash_stub = node.mx_hash = {}
+                mx_hash_stub.rule = "rule_Hatom_Hor_Hexpr_ultEor__u6"
+                
+                mx_hash_stub.hash_key = "expr"
+                mx_hash_stub.hash_key_idx = 6
+                mx_hash_stub["ult"] = "or"
+                
+                node.b = node.value_array.last().b
+                
+                ret_list.push node.clone()
+                
+                
+                node.value_array.pop()
+              
+              node.value_array.pop()
+            
+            node.value_array.pop()
+          FAcache[start_pos][32] = ret_list
+        when 36
+          ### rule_Hatom_Hoption_ultEoption__u7 queue ###
+          chk_len = stack.push [
+            36
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][1]
+          if !list_1
+            stack.push [
+              1
+              b_0
+              0
+            ]
+            continue
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            # node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][9]
+            if !list_2
+              stack.push [
+                9
+                b_1
+                0
+              ]
+              continue
+            
+            
+            # node.value_array.pop()
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 37
+        when 37
+          ### rule_Hatom_Hoption_ultEoption__u7 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][1]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][9]
+            for tok in list_2
+              
+              b_2 = tok.b
+              node.value_array.push tok
+              
+              arg_list = node.value_array
+              
+              
+              mx_hash_stub = node.mx_hash = {}
+              mx_hash_stub.rule = "rule_Hatom_Hoption_ultEoption__u7"
+              
+              mx_hash_stub.hash_key = "stmt"
+              mx_hash_stub.hash_key_idx = 8
+              mx_hash_stub["ult"] = "option"
+              
+              node.b = node.value_array.last().b
+              
+              ret_list.push node.clone()
+              
+              
+              node.value_array.pop()
+            
+            node.value_array.pop()
+          FAcache[start_pos][36] = ret_list
+        when 38
+          ### rule_Hatom_Hplus_ultEplus__u8 queue ###
+          chk_len = stack.push [
+            38
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][1]
+          if !list_1
+            stack.push [
+              1
+              b_0
+              0
+            ]
+            continue
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            # node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][10]
+            if !list_2
+              stack.push [
+                10
+                b_1
+                0
+              ]
+              continue
+            
+            
+            # node.value_array.pop()
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 39
+        when 39
+          ### rule_Hatom_Hplus_ultEplus__u8 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][1]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][10]
+            for tok in list_2
+              
+              b_2 = tok.b
+              node.value_array.push tok
+              
+              arg_list = node.value_array
+              
+              
+              mx_hash_stub = node.mx_hash = {}
+              mx_hash_stub.rule = "rule_Hatom_Hplus_ultEplus__u8"
+              
+              mx_hash_stub.hash_key = "stmt"
+              mx_hash_stub.hash_key_idx = 8
+              mx_hash_stub["ult"] = "plus"
+              
+              node.b = node.value_array.last().b
+              
+              ret_list.push node.clone()
+              
+              
+              node.value_array.pop()
+            
+            node.value_array.pop()
+          FAcache[start_pos][38] = ret_list
+        when 40
+          ### rule_Hatom_Hstar_ultEstar__u9 queue ###
+          chk_len = stack.push [
+            40
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][1]
+          if !list_1
+            stack.push [
+              1
+              b_0
+              0
+            ]
+            continue
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            # node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][11]
+            if !list_2
+              stack.push [
+                11
+                b_1
+                0
+              ]
+              continue
+            
+            
+            # node.value_array.pop()
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 41
+        when 41
+          ### rule_Hatom_Hstar_ultEstar__u9 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][1]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][11]
+            for tok in list_2
+              
+              b_2 = tok.b
+              node.value_array.push tok
+              
+              arg_list = node.value_array
+              
+              
+              mx_hash_stub = node.mx_hash = {}
+              mx_hash_stub.rule = "rule_Hatom_Hstar_ultEstar__u9"
+              
+              mx_hash_stub.hash_key = "stmt"
+              mx_hash_stub.hash_key_idx = 8
+              mx_hash_stub["ult"] = "star"
+              
+              node.b = node.value_array.last().b
+              
+              ret_list.push node.clone()
+              
+              
+              node.value_array.pop()
+            
+            node.value_array.pop()
+          FAcache[start_pos][40] = ret_list
+        when 42
+          ### rule_Hexpr_ultEpass__u11 queue ###
+          chk_len = stack.push [
+            42
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][6]
+          if !list_1
+            stack.push [
+              6
+              b_0
+              0
+            ]
+            continue
+          
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 43
+        when 43
+          ### rule_Hexpr_ultEpass__u11 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][6]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            arg_list = node.value_array
+            
+            
+            mx_hash_stub = node.mx_hash = {}
+            mx_hash_stub.rule = "rule_Hexpr_ultEpass__u11"
+            
+            mx_hash_stub.hash_key = "stmt"
+            mx_hash_stub.hash_key_idx = 8
+            mx_hash_stub["ult"] = "pass"
+            
+            node.b = node.value_array.last().b
+            
+            ret_list.push node.clone()
+            
+            
+            node.value_array.pop()
+          FAcache[start_pos][42] = ret_list
+        when 44
+          ### rule_Hexpr_Hstmt_ultEjoin__u12 queue ###
+          chk_len = stack.push [
+            44
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][6]
+          if !list_1
+            stack.push [
+              6
+              b_0
+              0
+            ]
+            continue
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            # node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][8]
+            if !list_2
+              stack.push [
+                8
+                b_1
+                0
+              ]
+              continue
+            
+            
+            # node.value_array.pop()
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 45
+        when 45
+          ### rule_Hexpr_Hstmt_ultEjoin__u12 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][6]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][8]
+            for tok in list_2
+              
+              b_2 = tok.b
+              node.value_array.push tok
+              
+              arg_list = node.value_array
+              
+              
+              mx_hash_stub = node.mx_hash = {}
+              mx_hash_stub.rule = "rule_Hexpr_Hstmt_ultEjoin__u12"
+              
+              mx_hash_stub.hash_key = "stmt"
+              mx_hash_stub.hash_key_idx = 8
+              mx_hash_stub["ult"] = "join"
+              
+              node.b = node.value_array.last().b
+              
+              ret_list.push node.clone()
+              
+              
+              node.value_array.pop()
+            
+            node.value_array.pop()
+          FAcache[start_pos][44] = ret_list
+    
+    FAcache[start_pos][8]
 
 # ###################################################################################################
 parser = new module.Parser

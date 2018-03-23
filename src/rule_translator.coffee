@@ -239,9 +239,14 @@ strict_parser = require './strict_parser'
     else
       mx_hash_setup_jl.push "mx_hash_stub[#{JSON.stringify mx_rule.key}] = #{strict_parser.translate mx_rule.value.ast, rule}"
   
+  # TODO DRY node.value_array.pop()
   strict_jl = []
   for strict_rule in rule.strict_list
-    strict_jl.push "continue if !(#{strict_parser.translate strict_rule.ast, rule})"
+    strict_jl.push """
+      if !(#{strict_parser.translate strict_rule.ast, rule})
+        node.value_array.pop()
+        continue
+      """
   
   backup_parse_position_list = parse_position_list.clone()
   
@@ -333,6 +338,7 @@ strict_parser = require './strict_parser'
       @cache= []
       @drop = []
       @length = token_list_list.length
+      return [] if @length == 0
       @Node = token_list_list[0]?[0]?.constructor
       @proxy= new @Node
       for token_list,idx in token_list_list
