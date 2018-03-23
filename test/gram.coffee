@@ -472,3 +472,5 @@ describe 'gram section', ()->
     it "some star"
     it "some plus"
   
+  it "multiple token hypothesis"
+  

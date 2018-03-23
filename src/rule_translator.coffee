@@ -354,8 +354,8 @@ strict_parser = require './strict_parser'
         for token in token_list
           token.a = idx
           token.b = idx+1
-          if -1 != idx = hash_key_list.idx token.mx_hash.hash_key
-            stub[idx] = [token]
+          if -1 != stub_idx = hash_key_list.idx token.mx_hash.hash_key
+            stub[stub_idx] = [token]
           stub[0] = [token]
         @cache.push stub
         @drop.push drop_stub.slice()
