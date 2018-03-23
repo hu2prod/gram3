@@ -142,7 +142,6 @@ class @Gram_scope
     ret
   
   compile : (opt={})->
-    opt.gram_module ?= 'gram3' # TODO remove
     if opt.expected_token # old API
       @expected_token = opt.expected_token
     # prepare

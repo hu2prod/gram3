@@ -15,6 +15,7 @@ gs = new Gram_scope
 q = (a, b)->gs.rule a,b
 
 q('atom',  '#q_token')              .mx('ult=const')
+q('atom',  '#dq_token')             .mx('ult=const')
 q('atom',  '#token')                .mx('ult=const')
 q('atom',  '#escape_token')         .mx('ult=const')
 q('atom',  '#hash_id')              .mx('ult=ref')

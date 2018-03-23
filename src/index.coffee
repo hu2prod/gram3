@@ -15,3 +15,5 @@ g       = (require './translator')
 @un_op_translator_framework = g.un_op_translator_framework
 @un_op_translator_holder    = g.un_op_translator_holder
 @Translator                 = g.Translator
+
+@gram_escape = (t)->JSON.stringify t

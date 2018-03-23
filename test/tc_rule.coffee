@@ -19,6 +19,8 @@ describe 'tc_rule section', ()->
     \\?
     \\+
     \\*
+    'a'
+    \"a\"
   """.split /\n/g
   for v in list
     do (v)->
@@ -32,6 +34,8 @@ describe 'tc_rule section', ()->
     ?
     +
     *
+    '
+    \"
   """.split /\n/g
   for v in list
     do (v)->
