@@ -84,7 +84,6 @@ strict_parser = require './strict_parser'
     ### #{group_name} queue ###
     #{make_tab drop_aux_queue, '  '}
     #{join_list code_queue_jl, '  '}
-  # TODO recursive recheck
   when #{ext_idx}
     ### #{group_name} collect ###
     node_list = []
