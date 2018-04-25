@@ -214,6 +214,18 @@ describe 'gram section', ()->
     
     return
   
+  it "prefix or match 2", ()->
+    res_list = gs_run 'p a', (gs)->
+      gs.rule 'stmt', 'p a|b'
+    
+    assert.equal res_list.length, 1
+    
+    res_list = gs_run 'p b', (gs)->
+      gs.rule 'stmt', 'p a|b'
+    
+    assert.equal res_list.length, 1
+    return
+  
   describe "mx", ()->
     it "mx_hash compiles properly", ()->
       res_list = gs_run 'hello', (gs)->
@@ -468,7 +480,34 @@ describe 'gram section', ()->
     
   
   describe "quantificators", ()->
-    it "some option"
+    describe "option", ()->
+      it 'a?', ()->
+        assert.throws ()->
+          gs_run 'a', (gs)->
+            gs.rule 'stmt', 'a?'
+      
+      it 'a b?', ()->
+        res_list = gs_run 'a b', (gs)->
+          gs.rule 'stmt', 'a b?'
+        
+        assert.equal res_list.length, 1
+        
+        res_list = gs_run 'a', (gs)->
+          gs.rule 'stmt', 'a b?'
+        
+        assert.equal res_list.length, 1
+      
+      it 'a b? c', ()->
+        res_list = gs_run 'a b c', (gs)->
+          gs.rule 'stmt', 'a b? c'
+        
+        assert.equal res_list.length, 1
+        
+        res_list = gs_run 'a c', (gs)->
+          gs.rule 'stmt', 'a b? c'
+        
+        assert.equal res_list.length, 1
+      
     it "some star"
     it "some plus"
   

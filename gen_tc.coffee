@@ -23,9 +23,9 @@ q('atom',  '#hash_id')              .mx('ult=ref')
 q('expr',  '#atom')                 .mx('ult=pass')
 q('expr',  '#atom #or #expr')       .mx('ult=or')
 
-q('stmt',  '#atom #option')         .mx('ult=option')
-q('stmt',  '#atom #plus')           .mx('ult=plus')
-q('stmt',  '#atom #star')           .mx('ult=star')
+q('expr',  '#atom #option')         .mx('ult=option')
+q('expr',  '#atom #plus')           .mx('ult=plus')
+q('expr',  '#atom #star')           .mx('ult=star')
 q('atom',  '#bra_op #stmt #bra_cl') .mx('ult=bra')
 
 q('stmt',  '#expr')                 .mx('ult=pass')

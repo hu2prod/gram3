@@ -2,6 +2,7 @@ module = @
 
 token_connector_parser = require './token_connector_parser'
 strict_parser = require './strict_parser'
+{Node} = require './node'
 
 # NOTE plain sequence only. No quantificators
 @translate_group = (group, scope)->
@@ -159,6 +160,11 @@ strict_parser = require './strict_parser'
     #{aux_loop}
     """
   switch pos.mx_hash.ult
+    when 'nope'
+      code = """
+        ### NOPE ###
+        #{code}
+        """
     when 'pass'
       if pos.value_array.length != 1
         throw new Error "can't pass with pos.value_array.length != 1"
@@ -190,10 +196,25 @@ strict_parser = require './strict_parser'
         """
       or_list = module.or_flatten pos
       for sub_pos in or_list
-        # 1 что б не сработал aux_skip
-        sub_jl.push """
-          #{module.pos_translate scope, rule, sub_pos, 1, payload, is_collect}
+        sub_payload = module.pos_translate scope, rule, sub_pos, pp_idx, payload, is_collect
+        if pos.mx_hash.synthetic
+          # synthetic wrapper for continue
+          # loop = forever
+          # for _i_#{pp_idx} in [0 ... 1] - once
+          sub_jl.push """
+            for _i_#{pp_idx} in [0 ... 1]
+              #{make_tab sub_payload, '  '}
+            """
+        else
+          sub_jl.push sub_payload
+      
+      aux_synthetic = ""
+      if pos.mx_hash.synthetic
+        aux_skip = ""
+        aux_synthetic = """
+          #{b_n} = node.value_array.last().b
           """
+      
       if code
         code = """
         #{aux_skip}
@@ -205,7 +226,7 @@ strict_parser = require './strict_parser'
         
         for tok_list in hyp_list_#{pp_idx}
           node.value_array.append tok_list
-          
+          #{aux_synthetic}
           #{make_tab code, '  '}
           
           node.value_array.length -= tok_list.length
@@ -231,6 +252,27 @@ strict_parser = require './strict_parser'
       when "pass", "join"
         for v in ast.value_array
           walk v
+      when "option"
+        if parse_position_list.length == 0
+          throw new Error "option can't be at first position"
+        
+        nope = new Node
+        nope.mx_hash.ult = 'nope'
+        
+        proxy = new Node
+        proxy.mx_hash.ult = 'or'
+        proxy.mx_hash.synthetic = '1'
+        proxy.value_array.push nope
+        proxy.value_array.push new Node # separator
+        proxy.value_array.push ast.value_array[0]
+        parse_position_list.push proxy
+      when "plus"
+        # need proxy rule
+        # return ref on rule
+        throw new Error "plus not implemented"
+      when "star"
+        # NOTE star == plus or nope
+        throw new Error "star not implemented"
       else
         throw new Error "unknown ult #{ast.mx_hash.ult}"
     return

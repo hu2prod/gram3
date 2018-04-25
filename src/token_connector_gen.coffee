@@ -40,11 +40,11 @@ hash_key_list = [
   "hash_id",
   "expr",
   "or",
-  "stmt",
   "option",
   "plus",
   "star",
   "bra_op",
+  "stmt",
   "bra_cl"
 ]
 
@@ -100,7 +100,7 @@ class @Parser
     FAdrop = @drop
     stack = [
       [
-        9
+        13
         0
         0
       ]
@@ -267,7 +267,7 @@ class @Parser
           ### token_expr queue ###
           
           stack.push [
-            38
+            44
             start_pos
             0
           ]
@@ -283,136 +283,136 @@ class @Parser
             start_pos
             0
           ]
-        when 38
+          ### rule_Hatom_Hoption_ultEoption__u8 ###
+          stack.push [
+            38
+            start_pos
+            0
+          ]
+          ### rule_Hatom_Hplus_ultEplus__u9 ###
+          stack.push [
+            40
+            start_pos
+            0
+          ]
+          ### rule_Hatom_Hstar_ultEstar__u10 ###
+          stack.push [
+            42
+            start_pos
+            0
+          ]
+        when 44
           ### token_expr collect ###
           node_list = []
           ### rule_Hatom_ultEpass__u6 ###
           node_list.append FAcache[start_pos][34]
           ### rule_Hatom_Hor_Hexpr_ultEor__u7 ###
           node_list.append FAcache[start_pos][36]
+          ### rule_Hatom_Hoption_ultEoption__u8 ###
+          node_list.append FAcache[start_pos][38]
+          ### rule_Hatom_Hplus_ultEplus__u9 ###
+          node_list.append FAcache[start_pos][40]
+          ### rule_Hatom_Hstar_ultEstar__u10 ###
+          node_list.append FAcache[start_pos][42]
           FAcache[start_pos][7] = node_list
         
         when 8
           ### token_or queue ###
           
           stack.push [
-            39
+            45
             start_pos
             0
           ]
-        when 39
+        when 45
           ### token_or collect ###
           node_list = []
           
           FAcache[start_pos][8] = node_list
         
         when 9
-          ### token_stmt queue ###
+          ### token_option queue ###
           
-          stack.push [
-            50
-            start_pos
-            0
-          ]
-          ### rule_Hatom_Hoption_ultEoption__u8 ###
-          stack.push [
-            40
-            start_pos
-            0
-          ]
-          ### rule_Hatom_Hplus_ultEplus__u9 ###
-          stack.push [
-            42
-            start_pos
-            0
-          ]
-          ### rule_Hatom_Hstar_ultEstar__u10 ###
-          stack.push [
-            44
-            start_pos
-            0
-          ]
-          ### rule_Hexpr_ultEpass__u12 ###
           stack.push [
             46
             start_pos
             0
           ]
-          ### rule_Hexpr_Hstmt_ultEjoin__u13 ###
-          stack.push [
-            48
-            start_pos
-            0
-          ]
-        when 50
-          ### token_stmt collect ###
+        when 46
+          ### token_option collect ###
           node_list = []
-          ### rule_Hatom_Hoption_ultEoption__u8 ###
-          node_list.append FAcache[start_pos][40]
-          ### rule_Hatom_Hplus_ultEplus__u9 ###
-          node_list.append FAcache[start_pos][42]
-          ### rule_Hatom_Hstar_ultEstar__u10 ###
-          node_list.append FAcache[start_pos][44]
-          ### rule_Hexpr_ultEpass__u12 ###
-          node_list.append FAcache[start_pos][46]
-          ### rule_Hexpr_Hstmt_ultEjoin__u13 ###
-          node_list.append FAcache[start_pos][48]
+          
           FAcache[start_pos][9] = node_list
         
         when 10
-          ### token_option queue ###
+          ### token_plus queue ###
           
           stack.push [
-            51
+            47
             start_pos
             0
           ]
-        when 51
-          ### token_option collect ###
+        when 47
+          ### token_plus collect ###
           node_list = []
           
           FAcache[start_pos][10] = node_list
         
         when 11
-          ### token_plus queue ###
+          ### token_star queue ###
           
           stack.push [
-            52
+            48
             start_pos
             0
           ]
-        when 52
-          ### token_plus collect ###
+        when 48
+          ### token_star collect ###
           node_list = []
           
           FAcache[start_pos][11] = node_list
         
         when 12
-          ### token_star queue ###
+          ### token_bra_op queue ###
           
           stack.push [
-            53
+            49
             start_pos
             0
           ]
-        when 53
-          ### token_star collect ###
+        when 49
+          ### token_bra_op collect ###
           node_list = []
           
           FAcache[start_pos][12] = node_list
         
         when 13
-          ### token_bra_op queue ###
+          ### token_stmt queue ###
           
           stack.push [
             54
             start_pos
             0
           ]
+          ### rule_Hexpr_ultEpass__u12 ###
+          stack.push [
+            50
+            start_pos
+            0
+          ]
+          ### rule_Hexpr_Hstmt_ultEjoin__u13 ###
+          stack.push [
+            52
+            start_pos
+            0
+          ]
         when 54
-          ### token_bra_op collect ###
+          ### token_stmt collect ###
           node_list = []
-          
+          ### rule_Hexpr_ultEpass__u12 ###
+          node_list.append FAcache[start_pos][50]
+          ### rule_Hexpr_Hstmt_ultEjoin__u13 ###
+          node_list.append FAcache[start_pos][52]
           FAcache[start_pos][13] = node_list
         
         when 14
@@ -716,10 +716,10 @@ class @Parser
           # node = new @Node
           # node.a = start_pos
           
-          list_1 = FAcache[b_0][13]
+          list_1 = FAcache[b_0][12]
           if !list_1
             stack.push [
-              13
+              12
               b_0
               0
             ]
@@ -732,10 +732,10 @@ class @Parser
             # node.value_array.push tok
             
             continue if b_1 >= length
-            list_2 = FAcache[b_1][9]
+            list_2 = FAcache[b_1][13]
             if !list_2
               stack.push [
-                9
+                13
                 b_1
                 0
               ]
@@ -768,7 +768,7 @@ class @Parser
           node = new @Node
           node.a = start_pos
           
-          list_1 = FAcache[b_0][13]
+          list_1 = FAcache[b_0][12]
           for tok in list_1
             if only_new
               continue if !tok._is_new
@@ -777,7 +777,7 @@ class @Parser
             node.value_array.push tok
             
             continue if b_1 >= length
-            list_2 = FAcache[b_1][9]
+            list_2 = FAcache[b_1][13]
             for tok in list_2
               
               b_2 = tok.b
@@ -973,8 +973,90 @@ class @Parser
             
             node.value_array.pop()
           FAcache[start_pos][36] = ret_list
-        when 40
+        when 38
           ### rule_Hatom_Hoption_ultEoption__u8 queue ###
+          chk_len = stack.push [
+            38
+            start_pos
+            only_new
+          ]
+          ret_list = []
+          b_0 = start_pos
+          # node = new @Node
+          # node.a = start_pos
+          
+          list_1 = FAcache[b_0][1]
+          if !list_1
+            stack.push [
+              1
+              b_0
+              0
+            ]
+            continue
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            # node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][9]
+            if !list_2
+              stack.push [
+                9
+                b_1
+                0
+              ]
+              continue
+            
+            
+            # node.value_array.pop()
+          if chk_len == stack.length
+            stack[chk_len-1][0] = 39
+        when 39
+          ### rule_Hatom_Hoption_ultEoption__u8 collect ###
+          ret_list = []
+          b_0 = start_pos
+          node = new @Node
+          node.a = start_pos
+          
+          list_1 = FAcache[b_0][1]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            continue if b_1 >= length
+            list_2 = FAcache[b_1][9]
+            for tok in list_2
+              
+              b_2 = tok.b
+              node.value_array.push tok
+              
+              arg_list = node.value_array
+              
+              
+              mx_hash_stub = node.mx_hash = {}
+              mx_hash_stub.rule = "rule_Hatom_Hoption_ultEoption__u8"
+              
+              mx_hash_stub.hash_key = "expr"
+              mx_hash_stub.hash_key_idx = 7
+              mx_hash_stub["ult"] = "option"
+              
+              node.b = node.value_array.last().b
+              
+              ret_list.push node.clone()
+              
+              
+              node.value_array.pop()
+            
+            node.value_array.pop()
+          FAcache[start_pos][38] = ret_list
+        when 40
+          ### rule_Hatom_Hplus_ultEplus__u9 queue ###
           chk_len = stack.push [
             40
             start_pos
@@ -1015,7 +1097,7 @@ class @Parser
           if chk_len == stack.length
             stack[chk_len-1][0] = 41
         when 41
-          ### rule_Hatom_Hoption_ultEoption__u8 collect ###
+          ### rule_Hatom_Hplus_ultEplus__u9 collect ###
           ret_list = []
           b_0 = start_pos
           node = new @Node
@@ -1040,11 +1122,11 @@ class @Parser
               
               
               mx_hash_stub = node.mx_hash = {}
-              mx_hash_stub.rule = "rule_Hatom_Hoption_ultEoption__u8"
+              mx_hash_stub.rule = "rule_Hatom_Hplus_ultEplus__u9"
               
-              mx_hash_stub.hash_key = "stmt"
-              mx_hash_stub.hash_key_idx = 9
-              mx_hash_stub["ult"] = "option"
+              mx_hash_stub.hash_key = "expr"
+              mx_hash_stub.hash_key_idx = 7
+              mx_hash_stub["ult"] = "plus"
               
               node.b = node.value_array.last().b
               
@@ -1056,7 +1138,7 @@ class @Parser
             node.value_array.pop()
           FAcache[start_pos][40] = ret_list
         when 42
-          ### rule_Hatom_Hplus_ultEplus__u9 queue ###
+          ### rule_Hatom_Hstar_ultEstar__u10 queue ###
           chk_len = stack.push [
             42
             start_pos
@@ -1097,7 +1179,7 @@ class @Parser
           if chk_len == stack.length
             stack[chk_len-1][0] = 43
         when 43
-          ### rule_Hatom_Hplus_ultEplus__u9 collect ###
+          ### rule_Hatom_Hstar_ultEstar__u10 collect ###
           ret_list = []
           b_0 = start_pos
           node = new @Node
@@ -1122,92 +1204,10 @@ class @Parser
               
               
               mx_hash_stub = node.mx_hash = {}
-              mx_hash_stub.rule = "rule_Hatom_Hplus_ultEplus__u9"
-              
-              mx_hash_stub.hash_key = "stmt"
-              mx_hash_stub.hash_key_idx = 9
-              mx_hash_stub["ult"] = "plus"
-              
-              node.b = node.value_array.last().b
-              
-              ret_list.push node.clone()
-              
-              
-              node.value_array.pop()
-            
-            node.value_array.pop()
-          FAcache[start_pos][42] = ret_list
-        when 44
-          ### rule_Hatom_Hstar_ultEstar__u10 queue ###
-          chk_len = stack.push [
-            44
-            start_pos
-            only_new
-          ]
-          ret_list = []
-          b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
-          
-          list_1 = FAcache[b_0][1]
-          if !list_1
-            stack.push [
-              1
-              b_0
-              0
-            ]
-            continue
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
-            
-            b_1 = tok.b
-            # node.value_array.push tok
-            
-            continue if b_1 >= length
-            list_2 = FAcache[b_1][12]
-            if !list_2
-              stack.push [
-                12
-                b_1
-                0
-              ]
-              continue
-            
-            
-            # node.value_array.pop()
-          if chk_len == stack.length
-            stack[chk_len-1][0] = 45
-        when 45
-          ### rule_Hatom_Hstar_ultEstar__u10 collect ###
-          ret_list = []
-          b_0 = start_pos
-          node = new @Node
-          node.a = start_pos
-          
-          list_1 = FAcache[b_0][1]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
-            
-            b_1 = tok.b
-            node.value_array.push tok
-            
-            continue if b_1 >= length
-            list_2 = FAcache[b_1][12]
-            for tok in list_2
-              
-              b_2 = tok.b
-              node.value_array.push tok
-              
-              arg_list = node.value_array
-              
-              
-              mx_hash_stub = node.mx_hash = {}
               mx_hash_stub.rule = "rule_Hatom_Hstar_ultEstar__u10"
               
-              mx_hash_stub.hash_key = "stmt"
-              mx_hash_stub.hash_key_idx = 9
+              mx_hash_stub.hash_key = "expr"
+              mx_hash_stub.hash_key_idx = 7
               mx_hash_stub["ult"] = "star"
               
               node.b = node.value_array.last().b
@@ -1218,11 +1218,11 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][44] = ret_list
-        when 46
+          FAcache[start_pos][42] = ret_list
+        when 50
           ### rule_Hexpr_ultEpass__u12 queue ###
           chk_len = stack.push [
-            46
+            50
             start_pos
             only_new
           ]
@@ -1241,8 +1241,8 @@ class @Parser
             continue
           
           if chk_len == stack.length
-            stack[chk_len-1][0] = 47
-        when 47
+            stack[chk_len-1][0] = 51
+        when 51
           ### rule_Hexpr_ultEpass__u12 collect ###
           ret_list = []
           b_0 = start_pos
@@ -1264,7 +1264,7 @@ class @Parser
             mx_hash_stub.rule = "rule_Hexpr_ultEpass__u12"
             
             mx_hash_stub.hash_key = "stmt"
-            mx_hash_stub.hash_key_idx = 9
+            mx_hash_stub.hash_key_idx = 13
             mx_hash_stub["ult"] = "pass"
             
             node.b = node.value_array.last().b
@@ -1273,11 +1273,11 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][46] = ret_list
-        when 48
+          FAcache[start_pos][50] = ret_list
+        when 52
           ### rule_Hexpr_Hstmt_ultEjoin__u13 queue ###
           chk_len = stack.push [
-            48
+            52
             start_pos
             only_new
           ]
@@ -1302,10 +1302,10 @@ class @Parser
             # node.value_array.push tok
             
             continue if b_1 >= length
-            list_2 = FAcache[b_1][9]
+            list_2 = FAcache[b_1][13]
             if !list_2
               stack.push [
-                9
+                13
                 b_1
                 0
               ]
@@ -1314,8 +1314,8 @@ class @Parser
             
             # node.value_array.pop()
           if chk_len == stack.length
-            stack[chk_len-1][0] = 49
-        when 49
+            stack[chk_len-1][0] = 53
+        when 53
           ### rule_Hexpr_Hstmt_ultEjoin__u13 collect ###
           ret_list = []
           b_0 = start_pos
@@ -1331,7 +1331,7 @@ class @Parser
             node.value_array.push tok
             
             continue if b_1 >= length
-            list_2 = FAcache[b_1][9]
+            list_2 = FAcache[b_1][13]
             for tok in list_2
               
               b_2 = tok.b
@@ -1344,7 +1344,7 @@ class @Parser
               mx_hash_stub.rule = "rule_Hexpr_Hstmt_ultEjoin__u13"
               
               mx_hash_stub.hash_key = "stmt"
-              mx_hash_stub.hash_key_idx = 9
+              mx_hash_stub.hash_key_idx = 13
               mx_hash_stub["ult"] = "join"
               
               node.b = node.value_array.last().b
@@ -1355,9 +1355,9 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][48] = ret_list
+          FAcache[start_pos][52] = ret_list
     
-    FAcache[start_pos][9]
+    FAcache[start_pos][13]
 
 # ###################################################################################################
 parser = new module.Parser
