@@ -508,6 +508,27 @@ describe 'gram section', ()->
         
         assert.equal res_list.length, 1
       
+      it 'a b? c?', ()->
+        res_list = gs_run 'a b c', (gs)->
+          gs.rule 'stmt', 'a b? c?'
+        
+        assert.equal res_list.length, 1
+        
+        res_list = gs_run 'a c', (gs)->
+          gs.rule 'stmt', 'a b? c?'
+        
+        assert.equal res_list.length, 1
+        
+        res_list = gs_run 'a b', (gs)->
+          gs.rule 'stmt', 'a b? c?'
+        
+        assert.equal res_list.length, 1
+        
+        res_list = gs_run 'a', (gs)->
+          gs.rule 'stmt', 'a b? c?'
+        
+        assert.equal res_list.length, 1
+      
     it "some star"
     it "some plus"
   
