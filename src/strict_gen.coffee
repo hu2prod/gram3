@@ -528,8 +528,7 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
           if chk_len == stack.length
             stack[chk_len-1][0] = 14
@@ -574,8 +573,7 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
           if chk_len == stack.length
             stack[chk_len-1][0] = 16
@@ -620,8 +618,7 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
           if chk_len == stack.length
             stack[chk_len-1][0] = 18
@@ -666,9 +663,43 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
+          hyp_list_1 = []
+          old_node = node
+          node = @proxy
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != "*"
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != "/"
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          node = old_node
+          
+          for tok_list in hyp_list_1
+            node.value_array.append tok_list
+            
+            
+            
+            node.value_array.length -= tok_list.length
           if chk_len == stack.length
             stack[chk_len-1][0] = 21
         when 21
@@ -737,9 +768,43 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
+          hyp_list_1 = []
+          old_node = node
+          node = @proxy
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != "+"
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != "-"
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          node = old_node
+          
+          for tok_list in hyp_list_1
+            node.value_array.append tok_list
+            
+            
+            
+            node.value_array.length -= tok_list.length
           if chk_len == stack.length
             stack[chk_len-1][0] = 23
         when 23
@@ -808,9 +873,103 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
+          hyp_list_1 = []
+          old_node = node
+          node = @proxy
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '<'
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '<='
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '>'
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '>='
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '!='
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '<>'
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '=='
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          node = old_node
+          
+          for tok_list in hyp_list_1
+            node.value_array.append tok_list
+            
+            
+            
+            node.value_array.length -= tok_list.length
           if chk_len == stack.length
             stack[chk_len-1][0] = 25
         when 25
@@ -938,9 +1097,67 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
+          hyp_list_1 = []
+          old_node = node
+          node = @proxy
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '&'
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '&&'
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '|'
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          
+          list_1 = FAcache[b_0][0]
+          for tok in list_1
+            if only_new
+              continue if !tok._is_new
+            continue if tok.value != '||'
+            b_1 = tok.b
+            node.value_array.push tok
+            
+            hyp_list_1.push node.value_array.clone()
+            
+            node.value_array.pop()
+          node = old_node
+          
+          for tok_list in hyp_list_1
+            node.value_array.append tok_list
+            
+            
+            
+            node.value_array.length -= tok_list.length
           if chk_len == stack.length
             stack[chk_len-1][0] = 27
         when 27
@@ -1033,8 +1250,7 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
           list_1 = FAcache[b_0][4]
           if !list_1
@@ -1089,8 +1305,7 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
           list_1 = FAcache[b_0][5]
           if !list_1
@@ -1145,8 +1360,7 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
           list_1 = FAcache[b_0][5]
           if !list_1
@@ -1161,14 +1375,14 @@ class @Parser
               continue if !tok._is_new
             
             b_1 = tok.b
-            # node.value_array.push tok
+            node.value_array.push tok
             
             continue if b_1 >= length
             list_2 = FAcache[b_1][0]
             for tok in list_2
               continue if tok.value != "["
               b_2 = tok.b
-              # node.value_array.push tok
+              node.value_array.push tok
               
               continue if b_2 >= length
               list_3 = FAcache[b_2][7]
@@ -1181,9 +1395,9 @@ class @Parser
                 continue
               
               
-              # node.value_array.pop()
+              node.value_array.pop()
             
-            # node.value_array.pop()
+            node.value_array.pop()
           if chk_len == stack.length
             stack[chk_len-1][0] = 34
         when 34
@@ -1255,8 +1469,7 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
           list_1 = FAcache[b_0][3]
           if !list_1
@@ -1311,8 +1524,7 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
           list_1 = FAcache[b_0][7]
           if !list_1
@@ -1367,8 +1579,7 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
           list_1 = FAcache[b_0][8]
           if !list_1
@@ -1423,8 +1634,7 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
           list_1 = FAcache[b_0][9]
           if !list_1
@@ -1479,8 +1689,7 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
           list_1 = FAcache[b_0][10]
           if !list_1
@@ -1535,8 +1744,7 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
           list_1 = FAcache[b_0][6]
           if !list_1
@@ -1551,7 +1759,7 @@ class @Parser
               continue if !tok._is_new
             
             b_1 = tok.b
-            # node.value_array.push tok
+            node.value_array.push tok
             
             continue if b_1 >= length
             list_2 = FAcache[b_1][2]
@@ -1565,7 +1773,7 @@ class @Parser
             for tok in list_2
               
               b_2 = tok.b
-              # node.value_array.push tok
+              node.value_array.push tok
               
               continue if b_2 >= length
               list_3 = FAcache[b_2][6]
@@ -1578,9 +1786,9 @@ class @Parser
                 continue
               
               
-              # node.value_array.pop()
+              node.value_array.pop()
             
-            # node.value_array.pop()
+            node.value_array.pop()
           if chk_len == stack.length
             stack[chk_len-1][0] = 49
         when 49
@@ -1648,8 +1856,7 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
           list_1 = FAcache[b_0][6]
           if !list_1
@@ -1664,7 +1871,7 @@ class @Parser
               continue if !tok._is_new
             
             b_1 = tok.b
-            # node.value_array.push tok
+            node.value_array.push tok
             
             continue if b_1 >= length
             list_2 = FAcache[b_1][2]
@@ -1678,7 +1885,7 @@ class @Parser
             for tok in list_2
               
               b_2 = tok.b
-              # node.value_array.push tok
+              node.value_array.push tok
               
               continue if b_2 >= length
               list_3 = FAcache[b_2][6]
@@ -1691,9 +1898,9 @@ class @Parser
                 continue
               
               
-              # node.value_array.pop()
+              node.value_array.pop()
             
-            # node.value_array.pop()
+            node.value_array.pop()
           if chk_len == stack.length
             stack[chk_len-1][0] = 51
         when 51
@@ -1764,8 +1971,7 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
           list_1 = FAcache[b_0][1]
           if !list_1
@@ -1780,7 +1986,7 @@ class @Parser
               continue if !tok._is_new
             
             b_1 = tok.b
-            # node.value_array.push tok
+            node.value_array.push tok
             
             continue if b_1 >= length
             list_2 = FAcache[b_1][6]
@@ -1793,7 +1999,7 @@ class @Parser
               continue
             
             
-            # node.value_array.pop()
+            node.value_array.pop()
           if chk_len == stack.length
             stack[chk_len-1][0] = 53
         when 53
@@ -1849,8 +2055,7 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
           list_1 = FAcache[b_0][0]
           for tok in list_1
@@ -1858,7 +2063,7 @@ class @Parser
               continue if !tok._is_new
             continue if tok.value != "("
             b_1 = tok.b
-            # node.value_array.push tok
+            node.value_array.push tok
             
             continue if b_1 >= length
             list_2 = FAcache[b_1][6]
@@ -1871,7 +2076,7 @@ class @Parser
               continue
             
             
-            # node.value_array.pop()
+            node.value_array.pop()
           if chk_len == stack.length
             stack[chk_len-1][0] = 55
         when 55
@@ -1934,8 +2139,7 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
           list_1 = FAcache[b_0][3]
           if !list_1
@@ -1950,14 +2154,14 @@ class @Parser
               continue if !tok._is_new
             
             b_1 = tok.b
-            # node.value_array.push tok
+            node.value_array.push tok
             
             continue if b_1 >= length
             list_2 = FAcache[b_1][0]
             for tok in list_2
               continue if tok.value != "["
               b_2 = tok.b
-              # node.value_array.push tok
+              node.value_array.push tok
               
               continue if b_2 >= length
               list_3 = FAcache[b_2][7]
@@ -1971,14 +2175,14 @@ class @Parser
               for tok in list_3
                 
                 b_3 = tok.b
-                # node.value_array.push tok
+                node.value_array.push tok
                 
                 continue if b_3 >= length
                 list_4 = FAcache[b_3][0]
                 for tok in list_4
                   continue if tok.value != ":"
                   b_4 = tok.b
-                  # node.value_array.push tok
+                  node.value_array.push tok
                   
                   continue if b_4 >= length
                   list_5 = FAcache[b_4][7]
@@ -1991,13 +2195,13 @@ class @Parser
                     continue
                   
                   
-                  # node.value_array.pop()
+                  node.value_array.pop()
                 
-                # node.value_array.pop()
+                node.value_array.pop()
               
-              # node.value_array.pop()
+              node.value_array.pop()
             
-            # node.value_array.pop()
+            node.value_array.pop()
           if chk_len == stack.length
             stack[chk_len-1][0] = 57
         when 57
@@ -2087,8 +2291,7 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
           list_1 = FAcache[b_0][3]
           if !list_1
@@ -2103,14 +2306,14 @@ class @Parser
               continue if !tok._is_new
             
             b_1 = tok.b
-            # node.value_array.push tok
+            node.value_array.push tok
             
             continue if b_1 >= length
             list_2 = FAcache[b_1][0]
             for tok in list_2
               continue if tok.value != "."
               b_2 = tok.b
-              # node.value_array.push tok
+              node.value_array.push tok
               
               continue if b_2 >= length
               list_3 = FAcache[b_2][8]
@@ -2123,9 +2326,9 @@ class @Parser
                 continue
               
               
-              # node.value_array.pop()
+              node.value_array.pop()
             
-            # node.value_array.pop()
+            node.value_array.pop()
           if chk_len == stack.length
             stack[chk_len-1][0] = 59
         when 59
@@ -2188,8 +2391,7 @@ class @Parser
           ]
           ret_list = []
           b_0 = start_pos
-          # node = new @Node
-          # node.a = start_pos
+          node = new @Node
           
           list_1 = FAcache[b_0][6]
           if !list_1
