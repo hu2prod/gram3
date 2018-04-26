@@ -625,6 +625,7 @@ describe 'gram section', ()->
       
       assert.equal fn('a').length, 1
       assert.equal fn('a + b').length, 1
+      assert.equal fn('a + b + c').length, 1
     
     it 'rvalue lvalue c->a->b->a case', ()->
       fn = gs_prsr (gs)->
@@ -635,6 +636,20 @@ describe 'gram section', ()->
       
       assert.equal fn('a').length, 1
       assert.equal fn('a + b').length, 1
+      assert.equal fn('a + b + c').length, 1
+    
+    it 'rvalue lvalue c->a->b->a overreset case', ()->
+      fn = gs_prsr (gs)->
+        gs.rule 'lvalue', 'a'
+        gs.rule 'lvalue', '#rvalue "+" #id'
+        gs.rule 'rvalue', '#lvalue'
+        gs.rule 'rvalue', '#lvalue wtf'
+        gs.rule 'stmt', '#rvalue'
+        gs.rule 'stmt', '#rvalue wtf'
+      
+      assert.equal fn('a').length, 1
+      assert.equal fn('a + b').length, 1
+      assert.equal fn('a + b + c').length, 1
     
   it "multiple token hypothesis"
   

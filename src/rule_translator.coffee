@@ -26,6 +26,7 @@ strict_parser = require './strict_parser'
   ]
   """
   
+  extra_reset_jl = []
   for rule in group.list
     rule_fn_name = "rule_#{rule.name_get()}"
     rule_idx = scope._extended_hash_key_list.idx rule_fn_name
@@ -38,9 +39,8 @@ strict_parser = require './strict_parser'
       ]
       """
     if rule.can_recursive
-      extra_reset = ""
       if rule._first_token_hash_key
-        extra_reset = """
+        extra_reset_jl.upush """
         stack.push [
           #{scope._extended_hash_key_list.idx rule._first_token_hash_key}
           start_pos
@@ -54,12 +54,13 @@ strict_parser = require './strict_parser'
           start_pos
           1
         ]
-        #{extra_reset}
         """
     code_collect_jl.push """
       ### #{rule_fn_name} ###
       node_list.append FAcache[start_pos][#{rule_idx}]
       """
+  
+  code_queue_recursive_jl.append extra_reset_jl
   
   drop_aux_queue = ""
   aux_recursive = "FAcache[start_pos][#{group.hash_key_idx}] = node_list"
