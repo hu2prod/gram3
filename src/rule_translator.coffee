@@ -215,7 +215,7 @@ strict_parser = require './strict_parser'
           #{b_n} = node.value_array.last().b
           """
       
-      if code
+      if code or !is_collect
         code = """
         #{aux_skip}
         hyp_list_#{pp_idx} = []
@@ -305,7 +305,7 @@ strict_parser = require './strict_parser'
     pos = parse_position_list.pop()
     code_queue = module.pos_translate scope, rule, pos, pp_idx, code_queue, false
   # OPT
-  code_queue = code_queue.replace /(\n\s+)node/g, '$1# node'
+  # code_queue = code_queue.replace /(\n\s+)node\./g, '$1# node.'
   # ###################################################################################################
   
   parse_position_list = backup_parse_position_list
@@ -342,8 +342,7 @@ strict_parser = require './strict_parser'
     ]
     ret_list = []
     b_0 = start_pos
-    # node = new @Node
-    # node.a = start_pos
+    node = new @Node
     #{make_tab code_queue, '  '}
     if chk_len == stack.length
       stack[chk_len-1][0] = #{ext_rule_idx}

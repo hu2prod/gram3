@@ -182,7 +182,6 @@ describe 'gram section', ()->
     
     return
   
-  # not working
   it "or match 2", ()->
     res_list = gs_run 'a', (gs)->
       gs.rule 'stmt', 'a|b'
@@ -224,6 +223,21 @@ describe 'gram section', ()->
       gs.rule 'stmt', 'p a|b'
     
     assert.equal res_list.length, 1
+    return
+  
+  it "or match 2 non terminal", ()->
+    res_list = gs_run 'a', (gs)->
+      gs.rule 'proxy', 'b'
+      gs.rule 'stmt', 'a|#proxy'
+    
+    assert.equal res_list.length, 1
+    
+    res_list = gs_run 'b', (gs)->
+      gs.rule 'proxy', 'b'
+      gs.rule 'stmt', 'a|#proxy'
+    
+    assert.equal res_list.length, 1
+    
     return
   
   describe "mx", ()->
