@@ -102,6 +102,30 @@ describe 'gram section', ()->
   # ###################################################################################################
   #    for heavier tests
   # ###################################################################################################
+  gs_prsr = (cb)->
+    gs = new Gram_scope
+    cb gs
+    code = gs.compile
+      gram_module : '../src/index'
+    
+    compiled = _iced.compile code
+    
+    code = """
+      __ret = {};
+      fn = function() {
+      #{compiled}
+      };
+      fn.call(__ret);
+      __ret
+      """
+    
+    mod = eval code
+    prsr = new mod.Parser
+    (str)->
+      tok_list = t.go str
+      
+      res_list = prsr.go tok_list
+  
   gs_run = (str, cb)->
     gs = new Gram_scope
     cb gs
@@ -546,5 +570,71 @@ describe 'gram section', ()->
     it "some star"
     it "some plus"
   
+  describe "double recursive", ()->
+    it 'a->b->a 2 pos opt', ()->
+      fn = gs_prsr (gs)->
+        gs.rule 'b', 'b #stmt?'
+        gs.rule 'stmt', 'a #b?'
+      
+      assert.equal fn('a').length, 1
+      assert.equal fn('a b').length, 1
+      assert.equal fn('a b a').length, 1
+      assert.equal fn('a b a b').length, 1
+      assert.equal fn('a b a b a').length, 1
+      assert.equal fn('a b a b a b').length, 1
+    
+    it 'a->b->c->a 2 pos opt', ()->
+      fn = gs_prsr (gs)->
+        gs.rule 'c', 'c #stmt?'
+        gs.rule 'b', 'b #c?'
+        gs.rule 'stmt', 'a #b?'
+      
+      assert.equal fn('a').length, 1
+      assert.equal fn('a b').length, 1
+      assert.equal fn('a b c a').length, 1
+      assert.equal fn('a b c a b').length, 1
+      assert.equal fn('a b c a b c').length, 1
+      assert.equal fn('a b c a b c a').length, 1
+      assert.equal fn('a b c a b c a b').length, 1
+      assert.equal fn('a b c a b c a b c').length, 1
+    
+    it 'stmt + case', ()->
+      fn = gs_prsr (gs)->
+        gs.rule 'stmt', '#id'
+        gs.rule 'stmt', '#stmt "+"'
+      
+      assert.equal fn('a').length, 1
+      assert.equal fn('a +').length, 1
+      assert.equal fn('a + +').length, 1
+    
+    it 'stmt + proxy case', ()->
+      fn = gs_prsr (gs)->
+        gs.rule 'stmt', '#id'
+        gs.rule 'proxy', '#stmt "+"'
+        gs.rule 'stmt', '#proxy'
+      
+      assert.equal fn('a').length, 1
+      assert.equal fn('a +').length, 1
+      assert.equal fn('a + +').length, 1
+    
+    it 'stmt lvalue a->b->a case', ()->
+      fn = gs_prsr (gs)->
+        gs.rule 'lvalue', 'a'
+        gs.rule 'lvalue', '#stmt "+" #id'
+        gs.rule 'stmt', '#lvalue'
+      
+      assert.equal fn('a').length, 1
+      assert.equal fn('a + b').length, 1
+    
+    it 'rvalue lvalue c->a->b->a case', ()->
+      fn = gs_prsr (gs)->
+        gs.rule 'lvalue', 'a'
+        gs.rule 'lvalue', '#rvalue "+" #id'
+        gs.rule 'rvalue', '#lvalue'
+        gs.rule 'stmt', '#rvalue'
+      
+      assert.equal fn('a').length, 1
+      assert.equal fn('a + b').length, 1
+    
   it "multiple token hypothesis"
   

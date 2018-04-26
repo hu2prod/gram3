@@ -22,7 +22,7 @@ strict_parser = require './strict_parser'
   stack.push [
     #{ext_idx}
     start_pos
-    0
+    only_new
   ]
   """
   
@@ -34,10 +34,19 @@ strict_parser = require './strict_parser'
       stack.push [
         #{rule_idx}
         start_pos
-        0
+        only_new
       ]
       """
     if rule.can_recursive
+      extra_reset = ""
+      if rule._first_token_hash_key
+        extra_reset = """
+        stack.push [
+          #{scope._extended_hash_key_list.idx rule._first_token_hash_key}
+          start_pos
+          1
+        ]
+        """
       code_queue_recursive_jl.push """
         ### #{rule_fn_name} ###
         stack.push [
@@ -45,6 +54,7 @@ strict_parser = require './strict_parser'
           start_pos
           1
         ]
+        #{extra_reset}
         """
     code_collect_jl.push """
       ### #{rule_fn_name} ###
@@ -54,6 +64,15 @@ strict_parser = require './strict_parser'
   drop_aux_queue = ""
   aux_recursive = "FAcache[start_pos][#{group.hash_key_idx}] = node_list"
   if can_recursive
+    reset_jl = []
+    idx_list = [group.hash_key_idx]
+    for rule in group.list
+      continue if !rule._first_token_hash_key
+      idx_list.upush scope._extended_hash_key_list.idx rule._first_token_hash_key
+    for idx in idx_list
+      reset_jl.push """
+        FAdrop[start_pos][#{idx}] = 0
+        """
     drop_aux_queue = """
     if FAdrop[start_pos][#{group.hash_key_idx}]
       FAcache[start_pos][#{group.hash_key_idx}] ?= []
@@ -72,6 +91,7 @@ strict_parser = require './strict_parser'
     if FAdrop[start_pos][#{group.hash_key_idx}]
       if node_list.last()?._is_new
         # recursive case
+        #{join_list reset_jl, '    '}
         stack.push [
           #{ext_idx}
           start_pos
@@ -353,7 +373,8 @@ strict_parser = require './strict_parser'
     node = new @Node
     node.a = start_pos
     #{make_tab code_collect, '  '}
-    FAcache[start_pos][#{rule_idx}] = ret_list
+    FAcache[start_pos][#{rule_idx}] ?= []
+    FAcache[start_pos][#{rule_idx}].append ret_list
   """
 
 @translate = (scope)->
