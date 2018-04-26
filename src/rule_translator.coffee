@@ -374,12 +374,9 @@ strict_parser = require './strict_parser'
     node = new @Node
     node.a = start_pos
     #{make_tab code_collect, '  '}
-    FAcache[start_pos][#{rule_idx}] = ret_list
+    FAcache[start_pos][#{rule_idx}] ?= []
+    FAcache[start_pos][#{rule_idx}].append ret_list
   """
-  # по какой-то непонятной причине вот это вызывает зависание тестов
-  # по ходу где-то происходит бесконечное добавление
-  # FAcache[start_pos][#{rule_idx}] ?= []
-  # FAcache[start_pos][#{rule_idx}].append ret_list
 
 @translate = (scope)->
   rule_jl = []

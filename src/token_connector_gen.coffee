@@ -482,7 +482,8 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][16] = ret_list
+          FAcache[start_pos][16] ?= []
+          FAcache[start_pos][16].append ret_list
         when 18
           ### rule_Hdq_token_ultEconst__u2 queue ###
           chk_len = stack.push [
@@ -536,7 +537,8 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][18] = ret_list
+          FAcache[start_pos][18] ?= []
+          FAcache[start_pos][18].append ret_list
         when 20
           ### rule_Htoken_ultEconst__u3 queue ###
           chk_len = stack.push [
@@ -590,7 +592,8 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][20] = ret_list
+          FAcache[start_pos][20] ?= []
+          FAcache[start_pos][20].append ret_list
         when 22
           ### rule_Hescape_token_ultEconst__u4 queue ###
           chk_len = stack.push [
@@ -644,7 +647,8 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][22] = ret_list
+          FAcache[start_pos][22] ?= []
+          FAcache[start_pos][22].append ret_list
         when 24
           ### rule_Hhash_id_ultEref__u5 queue ###
           chk_len = stack.push [
@@ -698,7 +702,8 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][24] = ret_list
+          FAcache[start_pos][24] ?= []
+          FAcache[start_pos][24].append ret_list
         when 26
           ### rule_Hbra_op_Hstmt_Hbra_cl_ultEbra__u11 queue ###
           chk_len = stack.push [
@@ -804,7 +809,8 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][26] = ret_list
+          FAcache[start_pos][26] ?= []
+          FAcache[start_pos][26].append ret_list
         when 34
           ### rule_Hatom_ultEpass__u6 queue ###
           chk_len = stack.push [
@@ -858,7 +864,8 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][34] = ret_list
+          FAcache[start_pos][34] ?= []
+          FAcache[start_pos][34].append ret_list
         when 36
           ### rule_Hatom_Hor_Hexpr_ultEor__u7 queue ###
           chk_len = stack.push [
@@ -964,7 +971,8 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][36] = ret_list
+          FAcache[start_pos][36] ?= []
+          FAcache[start_pos][36].append ret_list
         when 38
           ### rule_Hatom_Hoption_ultEoption__u8 queue ###
           chk_len = stack.push [
@@ -1045,7 +1053,8 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][38] = ret_list
+          FAcache[start_pos][38] ?= []
+          FAcache[start_pos][38].append ret_list
         when 40
           ### rule_Hatom_Hplus_ultEplus__u9 queue ###
           chk_len = stack.push [
@@ -1126,7 +1135,8 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][40] = ret_list
+          FAcache[start_pos][40] ?= []
+          FAcache[start_pos][40].append ret_list
         when 42
           ### rule_Hatom_Hstar_ultEstar__u10 queue ###
           chk_len = stack.push [
@@ -1207,7 +1217,8 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][42] = ret_list
+          FAcache[start_pos][42] ?= []
+          FAcache[start_pos][42].append ret_list
         when 50
           ### rule_Hexpr_ultEpass__u12 queue ###
           chk_len = stack.push [
@@ -1261,7 +1272,8 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][50] = ret_list
+          FAcache[start_pos][50] ?= []
+          FAcache[start_pos][50].append ret_list
         when 52
           ### rule_Hexpr_Hstmt_ultEjoin__u13 queue ###
           chk_len = stack.push [
@@ -1342,7 +1354,8 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][52] = ret_list
+          FAcache[start_pos][52] ?= []
+          FAcache[start_pos][52].append ret_list
     
     FAcache[start_pos][13]
 

@@ -436,19 +436,9 @@ class @Parser
                 start_pos
                 1
               ]
-              stack.push [
-                6
-                start_pos
-                1
-              ]
               ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16 ###
               stack.push [
                 50
-                start_pos
-                1
-              ]
-              stack.push [
-                6
                 start_pos
                 1
               ]
@@ -585,7 +575,8 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][13] = ret_list
+          FAcache[start_pos][13] ?= []
+          FAcache[start_pos][13].append ret_list
         when 15
           ### rule_XX_priorityE1__u2 queue ###
           chk_len = stack.push [
@@ -630,7 +621,8 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][15] = ret_list
+          FAcache[start_pos][15] ?= []
+          FAcache[start_pos][15].append ret_list
         when 17
           ### rule_XP_priorityE1__u3 queue ###
           chk_len = stack.push [
@@ -675,7 +667,8 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][17] = ret_list
+          FAcache[start_pos][17] ?= []
+          FAcache[start_pos][17].append ret_list
         when 20
           ### rule_XSXXX_priorityE5__right_assocE1__u4 queue ###
           chk_len = stack.push [
@@ -780,7 +773,8 @@ class @Parser
             
             
             node.value_array.length -= tok_list.length
-          FAcache[start_pos][20] = ret_list
+          FAcache[start_pos][20] ?= []
+          FAcache[start_pos][20].append ret_list
         when 22
           ### rule_XPXXX_priorityE6__right_assocE1__u5 queue ###
           chk_len = stack.push [
@@ -885,7 +879,8 @@ class @Parser
             
             
             node.value_array.length -= tok_list.length
-          FAcache[start_pos][22] = ret_list
+          FAcache[start_pos][22] ?= []
+          FAcache[start_pos][22].append ret_list
         when 24
           ### rule_XXXXXXEXXXXXXXXEXXXXEXXXXXXXXEEX_priorityE9__u6 queue ###
           chk_len = stack.push [
@@ -1109,7 +1104,8 @@ class @Parser
             
             
             node.value_array.length -= tok_list.length
-          FAcache[start_pos][24] = ret_list
+          FAcache[start_pos][24] ?= []
+          FAcache[start_pos][24].append ret_list
         when 26
           ### rule_XXXXXXXXXXXXXXXXX_priorityE10_right_assocE1__u7 queue ###
           chk_len = stack.push [
@@ -1262,7 +1258,8 @@ class @Parser
             
             
             node.value_array.length -= tok_list.length
-          FAcache[start_pos][26] = ret_list
+          FAcache[start_pos][26] ?= []
+          FAcache[start_pos][26].append ret_list
         when 29
           ### rule_Hdollar_id_priorityEX9000_ultEdollar_id__u8 queue ###
           chk_len = stack.push [
@@ -1317,7 +1314,8 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][29] = ret_list
+          FAcache[start_pos][29] ?= []
+          FAcache[start_pos][29].append ret_list
         when 31
           ### rule_Hhash_id_priorityEX9000_ultEhash_id__u9 queue ###
           chk_len = stack.push [
@@ -1372,7 +1370,8 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][31] = ret_list
+          FAcache[start_pos][31] ?= []
+          FAcache[start_pos][31].append ret_list
         when 33
           ### rule_Hhash_id_XX_Hnumber_XX_priorityEX9000_ultEhash_array_access__u19 queue ###
           chk_len = stack.push [
@@ -1481,7 +1480,8 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][33] = ret_list
+          FAcache[start_pos][33] ?= []
+          FAcache[start_pos][33].append ret_list
         when 38
           ### rule_Haccess_rvalue_priorityEX9000_ultEaccess_rvalue__u10 queue ###
           chk_len = stack.push [
@@ -1536,7 +1536,8 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][38] = ret_list
+          FAcache[start_pos][38] ?= []
+          FAcache[start_pos][38].append ret_list
         when 40
           ### rule_Hnumber_priorityEX9000_ultEvalue__u11 queue ###
           chk_len = stack.push [
@@ -1591,7 +1592,8 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][40] = ret_list
+          FAcache[start_pos][40] ?= []
+          FAcache[start_pos][40].append ret_list
         when 42
           ### rule_Hid_priorityEX9000_ultEwrap_string__u12 queue ###
           chk_len = stack.push [
@@ -1646,7 +1648,8 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][42] = ret_list
+          FAcache[start_pos][42] ?= []
+          FAcache[start_pos][42].append ret_list
         when 44
           ### rule_Hstring_literal_singleq_priorityEX9000_ultEvalue__u13 queue ###
           chk_len = stack.push [
@@ -1701,7 +1704,8 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][44] = ret_list
+          FAcache[start_pos][44] ?= []
+          FAcache[start_pos][44].append ret_list
         when 46
           ### rule_Hstring_literal_doubleq_priorityEX9000_ultEvalue__u14 queue ###
           chk_len = stack.push [
@@ -1756,7 +1760,8 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][46] = ret_list
+          FAcache[start_pos][46] ?= []
+          FAcache[start_pos][46].append ret_list
         when 48
           ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityXHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_u15 queue ###
           chk_len = stack.push [
@@ -1868,7 +1873,8 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][48] = ret_list
+          FAcache[start_pos][48] ?= []
+          FAcache[start_pos][48].append ret_list
         when 50
           ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16 queue ###
           chk_len = stack.push [
@@ -1983,7 +1989,8 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][50] = ret_list
+          FAcache[start_pos][50] ?= []
+          FAcache[start_pos][50].append ret_list
         when 52
           ### rule_Hpre_op_Hrvalue_priorityEHpre_opXpriority_ultEpre_op_HrvalueX1XXpriorityXEHpre_opXpriority_u17 queue ###
           chk_len = stack.push [
@@ -2067,7 +2074,8 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][52] = ret_list
+          FAcache[start_pos][52] ?= []
+          FAcache[start_pos][52].append ret_list
         when 54
           ### rule_XX_Hrvalue_XX_priorityEX9000_ultEbra__u18 queue ###
           chk_len = stack.push [
@@ -2151,7 +2159,8 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][54] = ret_list
+          FAcache[start_pos][54] ?= []
+          FAcache[start_pos][54].append ret_list
         when 56
           ### rule_Haccess_rvalue_XX_Hnumber_XX_Hnumber_XX_priorityEX9000_ultEslice_access__u20 queue ###
           chk_len = stack.push [
@@ -2303,7 +2312,8 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][56] = ret_list
+          FAcache[start_pos][56] ?= []
+          FAcache[start_pos][56].append ret_list
         when 58
           ### rule_Haccess_rvalue_XX_Hid_priorityEX9000_ultEfield_access__u21 queue ###
           chk_len = stack.push [
@@ -2403,7 +2413,8 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][58] = ret_list
+          FAcache[start_pos][58] ?= []
+          FAcache[start_pos][58].append ret_list
         when 65
           ### rule_Hrvalue_ultEdeep__u22 queue ###
           chk_len = stack.push [
@@ -2457,7 +2468,8 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][65] = ret_list
+          FAcache[start_pos][65] ?= []
+          FAcache[start_pos][65].append ret_list
     
     FAcache[start_pos][11]
 
