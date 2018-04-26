@@ -418,7 +418,6 @@ class @Parser
           if FAdrop[start_pos][6]
             if node_list.last()?._is_new
               # recursive case
-              FAdrop[start_pos][6] = 0
               FAdrop[start_pos][3] = 0
               FAdrop[start_pos][7] = 0
               FAdrop[start_pos][8] = 0

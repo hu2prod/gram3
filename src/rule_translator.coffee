@@ -70,6 +70,7 @@ strict_parser = require './strict_parser'
     for rule in group.list
       continue if !rule._first_token_hash_key
       idx_list.upush scope._extended_hash_key_list.idx rule._first_token_hash_key
+    idx_list.remove group.hash_key_idx # себя нельзя
     for idx in idx_list
       reset_jl.push """
         FAdrop[start_pos][#{idx}] = 0
