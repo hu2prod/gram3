@@ -108,11 +108,14 @@ class @Gram_scope
   hash_key_list       : []
   _extended_hash_key_list: []
   expected_token      : 'stmt'
+  _skip_hash_key_hash : {}
+  _one_const_rule_list: []
   
   constructor : ()->
     @initial_rule_list  = []
     @extra_hash_key_list= []
     @hash_key_list      = []
+    @_one_const_rule_list = []
     @_extended_hash_key_list= []
   
   rule : (_ret, str_list)->
@@ -144,12 +147,50 @@ class @Gram_scope
   compile : (opt={})->
     if opt.expected_token # old API
       @expected_token = opt.expected_token
+    opt.one_const_opt ?= true
     # prepare
     # _hash_key_list_init
     @hash_key_list.clear()
     @hash_key_list.push '_' # special position for string constants
     @hash_key_list.uappend @extra_hash_key_list
     
+    @_skip_hash_key_hash = {}
+    
+    if opt.one_const_opt
+      check_ast = (ast)->
+        if ast.mx_hash.ult == 'pass'
+          return check_ast ast.value_array[0]
+        ast.mx_hash.ult == 'const'
+      check = (rule)->
+        check_ast rule.token_connector.ast
+      
+      disallowed_ret_hash_key_hash = {}
+      allowed_ret_hash_key_hash = {}
+      for rule in @initial_rule_list
+        if check(rule)
+          allowed_ret_hash_key_hash[rule.ret_hash_key] = true
+        else
+          disallowed_ret_hash_key_hash[rule.ret_hash_key] = true
+      
+      for k,v of disallowed_ret_hash_key_hash
+        if allowed_ret_hash_key_hash[k]
+          perr "WARNING one_const_opt doesn't apply to #{k} because mixed rules"
+          allowed_ret_hash_key_hash[k] = false
+      
+      
+      
+      filtered_rule_list = []
+      @_one_const_rule_list = []
+      for rule in @initial_rule_list
+        if check(rule) and allowed_ret_hash_key_hash[rule.ret_hash_key]
+          @_one_const_rule_list.push rule
+          @_skip_hash_key_hash[rule.ret_hash_key] = true
+        else
+          filtered_rule_list.push rule
+    else
+      filtered_rule_list = @initial_rule_list
+    
+    # NOTICE @initial_rule_list, not filtered_rule_list
     for rule in @initial_rule_list
       rule.can_recursive = false
       rule.can_only_new_call = false
@@ -160,7 +201,7 @@ class @Gram_scope
     
     # can_recursive
     hk_call_hash = {}
-    for rule in @initial_rule_list
+    for rule in filtered_rule_list
       hk_call_hash[rule.ret_hash_key] ?= []
       continue if !rule._first_token_hash_key
       hk_call_hash[rule.ret_hash_key].upush rule._first_token_hash_key
@@ -180,13 +221,13 @@ class @Gram_scope
     
     recursive_token_hash = {}
     
-    for rule in @initial_rule_list
+    for rule in filtered_rule_list
       continue if !possible_call_list = hk_call_hash[rule._first_token_hash_key]
       rule.can_recursive = possible_call_list.has rule.ret_hash_key
       if rule.can_recursive
         recursive_token_hash[rule.ret_hash_key] = true
     
-    for rule in @initial_rule_list
+    for rule in filtered_rule_list
       rule.can_only_new_call = recursive_token_hash[rule.ret_hash_key]?
     
     # group rules
@@ -199,12 +240,9 @@ class @Gram_scope
         # can_recursive : false
       }
     
-    for rule in @initial_rule_list
+    for rule in filtered_rule_list
       @group_rule_list[rule.ret_hash_key_idx].list.push rule
     
-    # for group in @group_rule_list
-    #   for rule in group.list
-    #     group.can_recursive or= rule.can_recursive
      
     @_extended_hash_key_list = @hash_key_list.clone()
     rule_translator.translate @, opt

@@ -131,6 +131,22 @@ strict_parser = require './strict_parser'
   walk pos
   ret
 
+@_const_ast_to_string = (pos)->
+  while pos.mx_hash.ult == 'pass'
+    pos = pos.value_array[0]
+  value = pos.value_array[0].value
+  value = value.substr 1 if value[0] == "\\"
+  
+  need_escape = true
+  first = value[0]
+  last  = value[value.length-1]
+  if value.length >= 2
+    if first == last
+      if first in ["'", "\""]
+        need_escape = false
+  value = JSON.stringify(value) if need_escape
+  value
+
 @pos_translate = (scope, rule, pos, pp_idx, code, is_collect)->
   b = "b_#{pp_idx - 1}"
   b_n = "b_#{pp_idx}"
@@ -204,17 +220,7 @@ strict_parser = require './strict_parser'
         throw new Error "can't pass with pos.value_array.length != 1"
       return module.pos_translate scope, rule, pos.value_array[0], pp_idx, code, is_collect
     when 'const'
-      value = pos.value_array[0].value
-      value = value.substr 1 if value[0] == "\\"
-      
-      need_escape = true
-      first = value[0]
-      last  = value[value.length-1]
-      if value.length >= 2
-        if first == last
-          if first in ["'", "\""]
-            need_escape = false
-      value = JSON.stringify(value) if need_escape
+      value = module._const_ast_to_string pos
       aux_const_check = """
         continue if tok.value != #{value}
         """
@@ -405,6 +411,59 @@ strict_parser = require './strict_parser'
       rule_jl.push @translate_rule rule, group, scope
     token_jl.push @translate_group group, scope
   
+  aux_one_const_jl = []
+  if scope._one_const_rule_list.length > 0
+    for rule in scope._one_const_rule_list
+      value = module._const_ast_to_string rule.token_connector.ast
+      
+      rule_fn_name = "rule_#{rule.name_get()}"
+      
+      mx_hash_setup_jl = []
+      mx_hash_setup_jl.push "mx_hash_stub.hash_key = #{JSON.stringify rule.ret_hash_key}"
+      mx_hash_setup_jl.push "mx_hash_stub.hash_key_idx = #{rule.ret_hash_key_idx}"
+      for mx_rule in rule.mx_list
+        if mx_rule.autoassign
+          mx_hash_setup_jl.push "mx_hash_stub[#{JSON.stringify mx_rule.key}] = node.value_array[0].mx_hash[#{JSON.stringify mx_rule.key}]"
+        else
+          mx_hash_setup_jl.push "mx_hash_stub[#{JSON.stringify mx_rule.key}] = #{strict_parser.translate mx_rule.value.ast, rule}"
+      
+      strict_jl = []
+      for strict_rule in rule.strict_list
+        strict_jl.push """
+          if !(#{strict_parser.translate strict_rule.ast, rule})
+            node.value_array.pop()
+            continue
+          """
+      
+      hki = rule.ret_hash_key_idx
+      aux_one_const_jl.push """
+        for token_list,idx in token_list_list
+          token = token_list[0]
+          continue if token.value != #{value}
+          
+          node = new @Node
+          node.value_array.push token
+          # COPYPASTE
+          arg_list = node.value_array
+          #{join_list strict_jl, '  '}
+          
+          mx_hash_stub = node.mx_hash = {}
+          mx_hash_stub.rule = #{JSON.stringify rule_fn_name}
+          
+          #{join_list mx_hash_setup_jl, '  '}
+          
+          node.a = node.value_array[0].a
+          node.b = node.value_array.last().b
+          
+          # TODO у ret могут быть и другие правила, потому не надо сразу засырать cache
+          _pos_list = @cache[idx]
+          if !_pos_list[#{hki}]?
+            _pos_list[#{hki}] = []
+          _pos_list[#{hki}].push node
+        
+        """
+    
+  
   hash_key_list = scope._extended_hash_key_list
   """
   require 'fy'
@@ -441,6 +500,9 @@ strict_parser = require './strict_parser'
           stub[0] = [token]
         @cache.push stub
         @drop.push drop_stub.slice()
+      
+      # one const rule opt
+      #{join_list aux_one_const_jl, '    '}
       
       list = @fsm()
       max_token = token_list_list.length
