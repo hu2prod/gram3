@@ -75,9 +75,12 @@ strict_parser = require './strict_parser'
       reset_jl.push """
         FAdrop[start_pos][#{idx}] = 0
         """
+    # produces extra variable
+    # FAcache[start_pos][#{group.hash_key_idx}] ?= []
     drop_aux_queue = """
     if FAdrop[start_pos][#{group.hash_key_idx}]
-      FAcache[start_pos][#{group.hash_key_idx}] ?= []
+      if !FAcache[start_pos][#{group.hash_key_idx}]?
+        FAcache[start_pos][#{group.hash_key_idx}] = []
       continue
     FAdrop[start_pos][#{group.hash_key_idx}] = 1
     """
@@ -166,8 +169,11 @@ strict_parser = require './strict_parser'
         """
     aux_loop = ""
     if prev_code
+      # for tok in list_#{pp_idx} produces 2 extra variables
       aux_loop = """
-      for tok in list_#{pp_idx}
+      len_#{pp_idx} = list_#{pp_idx}.length
+      for idx_#{pp_idx} in [0 ... len_#{pp_idx}] by 1
+        tok = list_#{pp_idx}[idx_#{pp_idx}]
         #{make_tab aux_const_check, '  '}
         #{b_n} = tok.b
         node.value_array.push tok
@@ -375,8 +381,10 @@ strict_parser = require './strict_parser'
     node = new @Node
     node.a = start_pos
     #{make_tab code_collect, '  '}
-    FAcache[start_pos][#{rule_idx}] ?= []
-    FAcache[start_pos][#{rule_idx}].append ret_list
+    if FAcache[start_pos][#{rule_idx}]?
+      FAcache[start_pos][#{rule_idx}].append ret_list
+    else
+      FAcache[start_pos][#{rule_idx}] = ret_list
   """
 
 @translate = (scope)->
