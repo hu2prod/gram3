@@ -171,11 +171,15 @@ strict_parser = require './strict_parser'
     if prev_code
       # for tok in list_#{pp_idx} produces 2 extra variables
       # for idx_#{pp_idx} in [0 ... len_#{pp_idx}] by 1 produces extra variable
-      aux_loop = """
+      ###
+      disabled var opt
       len_#{pp_idx} = list_#{pp_idx}.length
       idx_#{pp_idx} = 0
       while idx_#{pp_idx} < len_#{pp_idx}
         tok = list_#{pp_idx}[idx_#{pp_idx}++]
+      ###
+      aux_loop = """
+      for tok in list_#{pp_idx}
         #{make_tab aux_const_check, '  '}
         #{b_n} = tok.b
         node.value_array.push tok
