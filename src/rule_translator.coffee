@@ -170,10 +170,12 @@ strict_parser = require './strict_parser'
     aux_loop = ""
     if prev_code
       # for tok in list_#{pp_idx} produces 2 extra variables
+      # for idx_#{pp_idx} in [0 ... len_#{pp_idx}] by 1 produces extra variable
       aux_loop = """
       len_#{pp_idx} = list_#{pp_idx}.length
-      for idx_#{pp_idx} in [0 ... len_#{pp_idx}] by 1
-        tok = list_#{pp_idx}[idx_#{pp_idx}]
+      idx_#{pp_idx} = 0
+      while idx_#{pp_idx} < len_#{pp_idx}
+        tok = list_#{pp_idx}[idx_#{pp_idx}++]
         #{make_tab aux_const_check, '  '}
         #{b_n} = tok.b
         node.value_array.push tok
@@ -370,7 +372,8 @@ strict_parser = require './strict_parser'
     ]
     ret_list = []
     b_0 = start_pos
-    node = new @Node
+    node = @proxy2
+    node.value_array.clear()
     #{make_tab code_queue, '  '}
     if chk_len == stack.length
       stack[chk_len-1][0] = #{ext_rule_idx}
@@ -378,7 +381,8 @@ strict_parser = require './strict_parser'
     ### #{rule_fn_name} collect ###
     ret_list = []
     b_0 = start_pos
-    node = new @Node
+    node = @proxy2
+    node.value_array.clear()
     node.a = start_pos
     #{make_tab code_collect, '  '}
     if FAcache[start_pos][#{rule_idx}]?
@@ -413,6 +417,7 @@ strict_parser = require './strict_parser'
     drop  : []
     Node  : null
     proxy : null
+    proxy2: null
     
     go : (token_list_list)->
       @cache= []
@@ -421,6 +426,7 @@ strict_parser = require './strict_parser'
       return [] if @length == 0
       @Node = token_list_list[0]?[0]?.constructor
       @proxy= new @Node
+      @proxy2= new @Node
       for token_list,idx in token_list_list
         stub = cache_stub.slice()
         for token in token_list
