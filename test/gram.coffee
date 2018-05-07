@@ -340,6 +340,28 @@ describe 'gram section', ()->
         assert.equal res_list[0].mx_hash.ult, 'proxy'
         
         return
+      
+      it "mx_hash proxy access 2 position hash", ()->
+        res_list = gs_run 'a hello', (gs)->
+          gs.rule('proxy', 'hello')
+          gs.rule('stmt', 'a #proxy').mx('ult=#proxy.hash_key')
+        
+        assert.equal res_list.length, 1
+        assert.equal res_list[0].mx_hash.hash_key, 'stmt'
+        assert.equal res_list[0].mx_hash.ult, 'proxy'
+        
+        return
+      
+      it "mx_hash proxy access 2 position dollar", ()->
+        res_list = gs_run 'a hello', (gs)->
+          gs.rule('proxy', 'hello')
+          gs.rule('stmt', 'a #proxy').mx('ult=$2.hash_key')
+        
+        assert.equal res_list.length, 1
+        assert.equal res_list[0].mx_hash.hash_key, 'stmt'
+        assert.equal res_list[0].mx_hash.ult, 'proxy'
+        
+        return
     
     describe "recursive rules", ()->
       it "a+b as non recursive", ()->

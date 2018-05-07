@@ -128,7 +128,9 @@ class @Gram_scope
     walk = (ast)->
       switch ast.mx_hash.ult
         when "const"
-          'just skip'
+          name = "_"
+          ret.hash_to_pos[name] ?= []
+          ret.hash_to_pos[name].push pos++
         when "ref"
           name = ast.value_array[0].value.substr 1
           if pos == 0
