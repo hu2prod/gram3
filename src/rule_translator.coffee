@@ -156,6 +156,11 @@ strict_parser = require './strict_parser'
   aux_skip = ""
   if pp_idx != 1
     aux_skip = "continue if #{b} >= length"
+    aux_skip = """
+      if #{b} >= length
+        node.value_array.pop()
+        continue
+      """
   
   
   

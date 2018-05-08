@@ -692,6 +692,19 @@ describe 'gram section', ()->
         assert.equal fn('b').length, 1
       
     it "multiple token hypothesis"
+    describe "extra", ()->
+      it 'proper token clear on out of bounds read', ()->
+        fn = gs_prsr (gs)->
+          gs.rule 'proxy2', 'a' # deopt
+          gs.rule 'proxy', '#proxy2 b'
+          gs.rule 'proxy', '#proxy2'
+          gs.rule 'stmt', '#proxy b'
+        
+        ret = fn('a b')
+        
+        assert.equal ret.length, 1
+        assert.equal ret[0].value_view, "a b"
+    
   describe 'no one_const_opt', ()->
     full_test one_const_opt:false
   
