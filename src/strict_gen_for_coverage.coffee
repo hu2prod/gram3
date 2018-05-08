@@ -57,7 +57,7 @@ require 'fy'
 drop_stub = []
 for i in [0 ... 12]
   drop_stub.push 0
-cache_stub = new Array 68
+cache_stub = new Array 62
 
 hash_key_list = [
   "_",
@@ -80,6 +80,7 @@ class @Parser
   drop  : []
   Node  : null
   proxy : null
+  proxy2: null
   
   go : (token_list_list)->
     @cache= []
@@ -88,6 +89,7 @@ class @Parser
     return [] if @length == 0
     @Node = token_list_list[0]?[0]?.constructor
     @proxy= new @Node
+    @proxy2= new @Node
     for token_list,idx in token_list_list
       stub = cache_stub.slice()
       for token in token_list
@@ -98,6 +100,86 @@ class @Parser
         stub[0] = [token]
       @cache.push stub
       @drop.push drop_stub.slice()
+    
+    # one const rule opt
+    for token_list,idx in token_list_list
+      token = token_list[0]
+      continue if token.value != "!"
+      
+      node = new @Node
+      node.value_array.push token
+      # COPYPASTE
+      arg_list = node.value_array
+      
+      
+      mx_hash_stub = node.mx_hash = {}
+      mx_hash_stub.rule = "rule_XX_priorityE1__u1"
+      
+      mx_hash_stub.hash_key = "pre_op"
+      mx_hash_stub.hash_key_idx = 1
+      mx_hash_stub["priority"] = 1
+      
+      node.a = node.value_array[0].a
+      node.b = node.value_array.last().b
+      
+      # TODO у ret могут быть и другие правила, потому не надо сразу засырать cache
+      _pos_list = @cache[idx]
+      if !_pos_list[1]?
+        _pos_list[1] = []
+      _pos_list[1].push node
+    
+    for token_list,idx in token_list_list
+      token = token_list[0]
+      continue if token.value != "-"
+      
+      node = new @Node
+      node.value_array.push token
+      # COPYPASTE
+      arg_list = node.value_array
+      
+      
+      mx_hash_stub = node.mx_hash = {}
+      mx_hash_stub.rule = "rule_XX_priorityE1__u2"
+      
+      mx_hash_stub.hash_key = "pre_op"
+      mx_hash_stub.hash_key_idx = 1
+      mx_hash_stub["priority"] = 1
+      
+      node.a = node.value_array[0].a
+      node.b = node.value_array.last().b
+      
+      # TODO у ret могут быть и другие правила, потому не надо сразу засырать cache
+      _pos_list = @cache[idx]
+      if !_pos_list[1]?
+        _pos_list[1] = []
+      _pos_list[1].push node
+    
+    for token_list,idx in token_list_list
+      token = token_list[0]
+      continue if token.value != "+"
+      
+      node = new @Node
+      node.value_array.push token
+      # COPYPASTE
+      arg_list = node.value_array
+      
+      
+      mx_hash_stub = node.mx_hash = {}
+      mx_hash_stub.rule = "rule_XP_priorityE1__u3"
+      
+      mx_hash_stub.hash_key = "pre_op"
+      mx_hash_stub.hash_key_idx = 1
+      mx_hash_stub["priority"] = 1
+      
+      node.a = node.value_array[0].a
+      node.b = node.value_array.last().b
+      
+      # TODO у ret могут быть и другие правила, потому не надо сразу засырать cache
+      _pos_list = @cache[idx]
+      if !_pos_list[1]?
+        _pos_list[1] = []
+      _pos_list[1].push node
+    
     
     list = @fsm()
     max_token = token_list_list.length
@@ -162,130 +244,107 @@ class @Parser
           ### token_pre_op queue ###
           
           stack.push [
-            19
-            start_pos
-            only_new
-          ]
-          ### rule_XX_priorityE1__u1 ###
-          stack.push [
             13
             start_pos
             only_new
           ]
-          ### rule_XX_priorityE1__u2 ###
-          stack.push [
-            15
-            start_pos
-            only_new
-          ]
-          ### rule_XP_priorityE1__u3 ###
-          stack.push [
-            17
-            start_pos
-            only_new
-          ]
-        when 19
+        when 13
           ### token_pre_op collect ###
           node_list = []
-          ### rule_XX_priorityE1__u1 ###
-          node_list.append FAcache[start_pos][13]
-          ### rule_XX_priorityE1__u2 ###
-          node_list.append FAcache[start_pos][15]
-          ### rule_XP_priorityE1__u3 ###
-          node_list.append FAcache[start_pos][17]
+          
           FAcache[start_pos][1] = node_list
         
         when 2
           ### token_bin_op queue ###
           
           stack.push [
-            28
+            22
             start_pos
             only_new
           ]
           ### rule_XSXXX_priorityE5__right_assocE1__u4 ###
+          stack.push [
+            14
+            start_pos
+            only_new
+          ]
+          ### rule_XPXXX_priorityE6__right_assocE1__u5 ###
+          stack.push [
+            16
+            start_pos
+            only_new
+          ]
+          ### rule_XXXXXXEXXXXXXXXEXXXXEXXXXXXXXEEX_priorityE9__u6 ###
+          stack.push [
+            18
+            start_pos
+            only_new
+          ]
+          ### rule_XXXXXXXXXXXXXXXXX_priorityE10_right_assocE1__u7 ###
           stack.push [
             20
             start_pos
             only_new
           ]
-          ### rule_XPXXX_priorityE6__right_assocE1__u5 ###
-          stack.push [
-            22
-            start_pos
-            only_new
-          ]
-          ### rule_XXXXXXEXXXXXXXXEXXXXEXXXXXXXXEEX_priorityE9__u6 ###
-          stack.push [
-            24
-            start_pos
-            only_new
-          ]
-          ### rule_XXXXXXXXXXXXXXXXX_priorityE10_right_assocE1__u7 ###
-          stack.push [
-            26
-            start_pos
-            only_new
-          ]
-        when 28
+        when 22
           ### token_bin_op collect ###
           node_list = []
           ### rule_XSXXX_priorityE5__right_assocE1__u4 ###
-          node_list.append FAcache[start_pos][20]
+          node_list.append FAcache[start_pos][14]
           ### rule_XPXXX_priorityE6__right_assocE1__u5 ###
-          node_list.append FAcache[start_pos][22]
+          node_list.append FAcache[start_pos][16]
           ### rule_XXXXXXEXXXXXXXXEXXXXEXXXXXXXXEEX_priorityE9__u6 ###
-          node_list.append FAcache[start_pos][24]
+          node_list.append FAcache[start_pos][18]
           ### rule_XXXXXXXXXXXXXXXXX_priorityE10_right_assocE1__u7 ###
-          node_list.append FAcache[start_pos][26]
+          node_list.append FAcache[start_pos][20]
           FAcache[start_pos][2] = node_list
         
         when 3
           ### token_access_rvalue queue ###
           
           stack.push [
-            35
-            start_pos
-            only_new
-          ]
-          ### rule_Hdollar_id_priorityEX9000_ultEdollar_id__u8 ###
-          stack.push [
             29
             start_pos
             only_new
           ]
+          ### rule_Hdollar_id_priorityEX9000_ultEdollar_id__u8 ###
+          stack.push [
+            23
+            start_pos
+            only_new
+          ]
           ### rule_Hhash_id_priorityEX9000_ultEhash_id__u9 ###
           stack.push [
-            31
+            25
             start_pos
             only_new
           ]
           ### rule_Hhash_id_XX_Hnumber_XX_priorityEX9000_ultEhash_array_access__u19 ###
           stack.push [
-            33
+            27
             start_pos
             only_new
           ]
-        when 35
+        when 29
           ### token_access_rvalue collect ###
           node_list = []
           ### rule_Hdollar_id_priorityEX9000_ultEdollar_id__u8 ###
-          node_list.append FAcache[start_pos][29]
+          node_list.append FAcache[start_pos][23]
           ### rule_Hhash_id_priorityEX9000_ultEhash_id__u9 ###
-          node_list.append FAcache[start_pos][31]
+          node_list.append FAcache[start_pos][25]
           ### rule_Hhash_id_XX_Hnumber_XX_priorityEX9000_ultEhash_array_access__u19 ###
-          node_list.append FAcache[start_pos][33]
+          node_list.append FAcache[start_pos][27]
           FAcache[start_pos][3] = node_list
         
         when 4
           ### token_dollar_id queue ###
           
           stack.push [
-            36
+            30
             start_pos
             only_new
           ]
-        when 36
+        when 30
           ### token_dollar_id collect ###
           node_list = []
           
@@ -295,11 +354,11 @@ class @Parser
           ### token_hash_id queue ###
           
           stack.push [
-            37
+            31
             start_pos
             only_new
           ]
-        when 37
+        when 31
           ### token_hash_id collect ###
           node_list = []
           
@@ -308,105 +367,106 @@ class @Parser
         when 6
           ### token_rvalue queue ###
           if FAdrop[start_pos][6]
-            FAcache[start_pos][6] ?= []
+            if !FAcache[start_pos][6]?
+              FAcache[start_pos][6] = []
             continue
           FAdrop[start_pos][6] = 1
-          stack.push [
-            60
-            start_pos
-            only_new
-          ]
-          ### rule_Haccess_rvalue_priorityEX9000_ultEaccess_rvalue__u10 ###
-          stack.push [
-            38
-            start_pos
-            only_new
-          ]
-          ### rule_Hnumber_priorityEX9000_ultEvalue__u11 ###
-          stack.push [
-            40
-            start_pos
-            only_new
-          ]
-          ### rule_Hid_priorityEX9000_ultEwrap_string__u12 ###
-          stack.push [
-            42
-            start_pos
-            only_new
-          ]
-          ### rule_Hstring_literal_singleq_priorityEX9000_ultEvalue__u13 ###
-          stack.push [
-            44
-            start_pos
-            only_new
-          ]
-          ### rule_Hstring_literal_doubleq_priorityEX9000_ultEvalue__u14 ###
-          stack.push [
-            46
-            start_pos
-            only_new
-          ]
-          ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityXHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_u15 ###
-          stack.push [
-            48
-            start_pos
-            only_new
-          ]
-          ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16 ###
-          stack.push [
-            50
-            start_pos
-            only_new
-          ]
-          ### rule_Hpre_op_Hrvalue_priorityEHpre_opXpriority_ultEpre_op_HrvalueX1XXpriorityXEHpre_opXpriority_u17 ###
-          stack.push [
-            52
-            start_pos
-            only_new
-          ]
-          ### rule_XX_Hrvalue_XX_priorityEX9000_ultEbra__u18 ###
           stack.push [
             54
             start_pos
             only_new
           ]
+          ### rule_Haccess_rvalue_priorityEX9000_ultEaccess_rvalue__u10 ###
+          stack.push [
+            32
+            start_pos
+            only_new
+          ]
+          ### rule_Hnumber_priorityEX9000_ultEvalue__u11 ###
+          stack.push [
+            34
+            start_pos
+            only_new
+          ]
+          ### rule_Hid_priorityEX9000_ultEwrap_string__u12 ###
+          stack.push [
+            36
+            start_pos
+            only_new
+          ]
+          ### rule_Hstring_literal_singleq_priorityEX9000_ultEvalue__u13 ###
+          stack.push [
+            38
+            start_pos
+            only_new
+          ]
+          ### rule_Hstring_literal_doubleq_priorityEX9000_ultEvalue__u14 ###
+          stack.push [
+            40
+            start_pos
+            only_new
+          ]
+          ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityXHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_u15 ###
+          stack.push [
+            42
+            start_pos
+            only_new
+          ]
+          ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16 ###
+          stack.push [
+            44
+            start_pos
+            only_new
+          ]
+          ### rule_Hpre_op_Hrvalue_priorityEHpre_opXpriority_ultEpre_op_HrvalueX1XXpriorityXEHpre_opXpriority_u17 ###
+          stack.push [
+            46
+            start_pos
+            only_new
+          ]
+          ### rule_XX_Hrvalue_XX_priorityEX9000_ultEbra__u18 ###
+          stack.push [
+            48
+            start_pos
+            only_new
+          ]
           ### rule_Haccess_rvalue_XX_Hnumber_XX_Hnumber_XX_priorityEX9000_ultEslice_access__u20 ###
           stack.push [
-            56
+            50
             start_pos
             only_new
           ]
           ### rule_Haccess_rvalue_XX_Hid_priorityEX9000_ultEfield_access__u21 ###
           stack.push [
-            58
+            52
             start_pos
             only_new
           ]
-        when 60
+        when 54
           ### token_rvalue collect ###
           node_list = []
           ### rule_Haccess_rvalue_priorityEX9000_ultEaccess_rvalue__u10 ###
-          node_list.append FAcache[start_pos][38]
+          node_list.append FAcache[start_pos][32]
           ### rule_Hnumber_priorityEX9000_ultEvalue__u11 ###
-          node_list.append FAcache[start_pos][40]
+          node_list.append FAcache[start_pos][34]
           ### rule_Hid_priorityEX9000_ultEwrap_string__u12 ###
-          node_list.append FAcache[start_pos][42]
+          node_list.append FAcache[start_pos][36]
           ### rule_Hstring_literal_singleq_priorityEX9000_ultEvalue__u13 ###
-          node_list.append FAcache[start_pos][44]
+          node_list.append FAcache[start_pos][38]
           ### rule_Hstring_literal_doubleq_priorityEX9000_ultEvalue__u14 ###
-          node_list.append FAcache[start_pos][46]
+          node_list.append FAcache[start_pos][40]
           ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityXHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_u15 ###
-          node_list.append FAcache[start_pos][48]
+          node_list.append FAcache[start_pos][42]
           ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16 ###
-          node_list.append FAcache[start_pos][50]
+          node_list.append FAcache[start_pos][44]
           ### rule_Hpre_op_Hrvalue_priorityEHpre_opXpriority_ultEpre_op_HrvalueX1XXpriorityXEHpre_opXpriority_u17 ###
-          node_list.append FAcache[start_pos][52]
+          node_list.append FAcache[start_pos][46]
           ### rule_XX_Hrvalue_XX_priorityEX9000_ultEbra__u18 ###
-          node_list.append FAcache[start_pos][54]
+          node_list.append FAcache[start_pos][48]
           ### rule_Haccess_rvalue_XX_Hnumber_XX_Hnumber_XX_priorityEX9000_ultEslice_access__u20 ###
-          node_list.append FAcache[start_pos][56]
+          node_list.append FAcache[start_pos][50]
           ### rule_Haccess_rvalue_XX_Hid_priorityEX9000_ultEfield_access__u21 ###
-          node_list.append FAcache[start_pos][58]
+          node_list.append FAcache[start_pos][52]
           for node in node_list
             node._is_new = true
           if append_list = FAcache[start_pos][6]
@@ -425,25 +485,19 @@ class @Parser
               FAdrop[start_pos][10] = 0
               FAdrop[start_pos][1] = 0
               stack.push [
-                60
+                54
                 start_pos
                 1
               ]
               ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityXHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_u15 ###
               stack.push [
-                48
+                42
                 start_pos
                 1
               ]
               ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16 ###
               stack.push [
-                50
-                start_pos
-                1
-              ]
-              ### rule_XX_Hrvalue_XX_priorityEX9000_ultEbra__u18 ###
-              stack.push [
-                54
+                44
                 start_pos
                 1
               ]
@@ -457,11 +511,11 @@ class @Parser
           ### token_number queue ###
           
           stack.push [
-            61
+            55
             start_pos
             only_new
           ]
-        when 61
+        when 55
           ### token_number collect ###
           node_list = []
           
@@ -471,11 +525,11 @@ class @Parser
           ### token_id queue ###
           
           stack.push [
-            62
+            56
             start_pos
             only_new
           ]
-        when 62
+        when 56
           ### token_id collect ###
           node_list = []
           
@@ -485,11 +539,11 @@ class @Parser
           ### token_string_literal_singleq queue ###
           
           stack.push [
-            63
+            57
             start_pos
             only_new
           ]
-        when 63
+        when 57
           ### token_string_literal_singleq collect ###
           node_list = []
           
@@ -499,11 +553,11 @@ class @Parser
           ### token_string_literal_doubleq queue ###
           
           stack.push [
-            64
+            58
             start_pos
             only_new
           ]
-        when 64
+        when 58
           ### token_string_literal_doubleq collect ###
           node_list = []
           
@@ -513,171 +567,34 @@ class @Parser
           ### token_strict_rule queue ###
           
           stack.push [
-            67
+            61
             start_pos
             only_new
           ]
           ### rule_Hrvalue_ultEdeep__u22 ###
           stack.push [
-            65
+            59
             start_pos
             only_new
           ]
-        when 67
+        when 61
           ### token_strict_rule collect ###
           node_list = []
           ### rule_Hrvalue_ultEdeep__u22 ###
-          node_list.append FAcache[start_pos][65]
+          node_list.append FAcache[start_pos][59]
           FAcache[start_pos][11] = node_list
         
-        when 13
-          ### rule_XX_priorityE1__u1 queue ###
-          chk_len = stack.push [
-            13
-            start_pos
-            only_new
-          ]
-          ret_list = []
-          b_0 = start_pos
-          node = new @Node
-          
-          if chk_len == stack.length
-            stack[chk_len-1][0] = 14
         when 14
-          ### rule_XX_priorityE1__u1 collect ###
-          ret_list = []
-          b_0 = start_pos
-          node = new @Node
-          node.a = start_pos
-          
-          list_1 = FAcache[b_0][0]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
-            continue if tok.value != "!"
-            b_1 = tok.b
-            node.value_array.push tok
-            
-            arg_list = node.value_array
-            
-            
-            mx_hash_stub = node.mx_hash = {}
-            mx_hash_stub.rule = "rule_XX_priorityE1__u1"
-            
-            mx_hash_stub.hash_key = "pre_op"
-            mx_hash_stub.hash_key_idx = 1
-            mx_hash_stub["priority"] = 1
-            
-            node.b = node.value_array.last().b
-            
-            ret_list.push node.clone()
-            
-            
-            node.value_array.pop()
-          FAcache[start_pos][13] ?= []
-          FAcache[start_pos][13].append ret_list
-        when 15
-          ### rule_XX_priorityE1__u2 queue ###
-          chk_len = stack.push [
-            15
-            start_pos
-            only_new
-          ]
-          ret_list = []
-          b_0 = start_pos
-          node = new @Node
-          
-          if chk_len == stack.length
-            stack[chk_len-1][0] = 16
-        when 16
-          ### rule_XX_priorityE1__u2 collect ###
-          ret_list = []
-          b_0 = start_pos
-          node = new @Node
-          node.a = start_pos
-          
-          list_1 = FAcache[b_0][0]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
-            continue if tok.value != "-"
-            b_1 = tok.b
-            node.value_array.push tok
-            
-            arg_list = node.value_array
-            
-            
-            mx_hash_stub = node.mx_hash = {}
-            mx_hash_stub.rule = "rule_XX_priorityE1__u2"
-            
-            mx_hash_stub.hash_key = "pre_op"
-            mx_hash_stub.hash_key_idx = 1
-            mx_hash_stub["priority"] = 1
-            
-            node.b = node.value_array.last().b
-            
-            ret_list.push node.clone()
-            
-            
-            node.value_array.pop()
-          FAcache[start_pos][15] ?= []
-          FAcache[start_pos][15].append ret_list
-        when 17
-          ### rule_XP_priorityE1__u3 queue ###
-          chk_len = stack.push [
-            17
-            start_pos
-            only_new
-          ]
-          ret_list = []
-          b_0 = start_pos
-          node = new @Node
-          
-          if chk_len == stack.length
-            stack[chk_len-1][0] = 18
-        when 18
-          ### rule_XP_priorityE1__u3 collect ###
-          ret_list = []
-          b_0 = start_pos
-          node = new @Node
-          node.a = start_pos
-          
-          list_1 = FAcache[b_0][0]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
-            continue if tok.value != "+"
-            b_1 = tok.b
-            node.value_array.push tok
-            
-            arg_list = node.value_array
-            
-            
-            mx_hash_stub = node.mx_hash = {}
-            mx_hash_stub.rule = "rule_XP_priorityE1__u3"
-            
-            mx_hash_stub.hash_key = "pre_op"
-            mx_hash_stub.hash_key_idx = 1
-            mx_hash_stub["priority"] = 1
-            
-            node.b = node.value_array.last().b
-            
-            ret_list.push node.clone()
-            
-            
-            node.value_array.pop()
-          FAcache[start_pos][17] ?= []
-          FAcache[start_pos][17].append ret_list
-        when 20
           ### rule_XSXXX_priorityE5__right_assocE1__u4 queue ###
           chk_len = stack.push [
-            20
+            14
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           hyp_list_1 = []
           old_node = node
@@ -715,12 +632,13 @@ class @Parser
             
             node.value_array.length -= tok_list.length
           if chk_len == stack.length
-            stack[chk_len-1][0] = 21
-        when 21
+            stack[chk_len-1][0] = 15
+        when 15
           ### rule_XSXXX_priorityE5__right_assocE1__u4 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           hyp_list_1 = []
@@ -772,18 +690,21 @@ class @Parser
             
             
             node.value_array.length -= tok_list.length
-          FAcache[start_pos][20] ?= []
-          FAcache[start_pos][20].append ret_list
-        when 22
+          if FAcache[start_pos][14]?
+            FAcache[start_pos][14].append ret_list
+          else
+            FAcache[start_pos][14] = ret_list
+        when 16
           ### rule_XPXXX_priorityE6__right_assocE1__u5 queue ###
           chk_len = stack.push [
-            22
+            16
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           hyp_list_1 = []
           old_node = node
@@ -821,12 +742,13 @@ class @Parser
             
             node.value_array.length -= tok_list.length
           if chk_len == stack.length
-            stack[chk_len-1][0] = 23
-        when 23
+            stack[chk_len-1][0] = 17
+        when 17
           ### rule_XPXXX_priorityE6__right_assocE1__u5 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           hyp_list_1 = []
@@ -878,18 +800,21 @@ class @Parser
             
             
             node.value_array.length -= tok_list.length
-          FAcache[start_pos][22] ?= []
-          FAcache[start_pos][22].append ret_list
-        when 24
+          if FAcache[start_pos][16]?
+            FAcache[start_pos][16].append ret_list
+          else
+            FAcache[start_pos][16] = ret_list
+        when 18
           ### rule_XXXXXXEXXXXXXXXEXXXXEXXXXXXXXEEX_priorityE9__u6 queue ###
           chk_len = stack.push [
-            24
+            18
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           hyp_list_1 = []
           old_node = node
@@ -987,12 +912,13 @@ class @Parser
             
             node.value_array.length -= tok_list.length
           if chk_len == stack.length
-            stack[chk_len-1][0] = 25
-        when 25
+            stack[chk_len-1][0] = 19
+        when 19
           ### rule_XXXXXXEXXXXXXXXEXXXXEXXXXXXXXEEX_priorityE9__u6 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           hyp_list_1 = []
@@ -1103,18 +1029,21 @@ class @Parser
             
             
             node.value_array.length -= tok_list.length
-          FAcache[start_pos][24] ?= []
-          FAcache[start_pos][24].append ret_list
-        when 26
+          if FAcache[start_pos][18]?
+            FAcache[start_pos][18].append ret_list
+          else
+            FAcache[start_pos][18] = ret_list
+        when 20
           ### rule_XXXXXXXXXXXXXXXXX_priorityE10_right_assocE1__u7 queue ###
           chk_len = stack.push [
-            26
+            20
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           hyp_list_1 = []
           old_node = node
@@ -1176,12 +1105,13 @@ class @Parser
             
             node.value_array.length -= tok_list.length
           if chk_len == stack.length
-            stack[chk_len-1][0] = 27
-        when 27
+            stack[chk_len-1][0] = 21
+        when 21
           ### rule_XXXXXXXXXXXXXXXXX_priorityE10_right_assocE1__u7 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           hyp_list_1 = []
@@ -1257,18 +1187,21 @@ class @Parser
             
             
             node.value_array.length -= tok_list.length
-          FAcache[start_pos][26] ?= []
-          FAcache[start_pos][26].append ret_list
-        when 29
+          if FAcache[start_pos][20]?
+            FAcache[start_pos][20].append ret_list
+          else
+            FAcache[start_pos][20] = ret_list
+        when 23
           ### rule_Hdollar_id_priorityEX9000_ultEdollar_id__u8 queue ###
           chk_len = stack.push [
-            29
+            23
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           list_1 = FAcache[b_0][4]
           if !list_1
@@ -1280,12 +1213,13 @@ class @Parser
             continue
           
           if chk_len == stack.length
-            stack[chk_len-1][0] = 30
-        when 30
+            stack[chk_len-1][0] = 24
+        when 24
           ### rule_Hdollar_id_priorityEX9000_ultEdollar_id__u8 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           list_1 = FAcache[b_0][4]
@@ -1313,18 +1247,21 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][29] ?= []
-          FAcache[start_pos][29].append ret_list
-        when 31
+          if FAcache[start_pos][23]?
+            FAcache[start_pos][23].append ret_list
+          else
+            FAcache[start_pos][23] = ret_list
+        when 25
           ### rule_Hhash_id_priorityEX9000_ultEhash_id__u9 queue ###
           chk_len = stack.push [
-            31
+            25
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           list_1 = FAcache[b_0][5]
           if !list_1
@@ -1336,12 +1273,13 @@ class @Parser
             continue
           
           if chk_len == stack.length
-            stack[chk_len-1][0] = 32
-        when 32
+            stack[chk_len-1][0] = 26
+        when 26
           ### rule_Hhash_id_priorityEX9000_ultEhash_id__u9 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           list_1 = FAcache[b_0][5]
@@ -1369,18 +1307,21 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][31] ?= []
-          FAcache[start_pos][31].append ret_list
-        when 33
+          if FAcache[start_pos][25]?
+            FAcache[start_pos][25].append ret_list
+          else
+            FAcache[start_pos][25] = ret_list
+        when 27
           ### rule_Hhash_id_XX_Hnumber_XX_priorityEX9000_ultEhash_array_access__u19 queue ###
           chk_len = stack.push [
-            33
+            27
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           list_1 = FAcache[b_0][5]
           if !list_1
@@ -1397,14 +1338,18 @@ class @Parser
             b_1 = tok.b
             node.value_array.push tok
             
-            continue if b_1 >= length
+            if b_1 >= length
+              node.value_array.pop()
+              continue
             list_2 = FAcache[b_1][0]
             for tok in list_2
               continue if tok.value != "["
               b_2 = tok.b
               node.value_array.push tok
               
-              continue if b_2 >= length
+              if b_2 >= length
+                node.value_array.pop()
+                continue
               list_3 = FAcache[b_2][7]
               if !list_3
                 stack.push [
@@ -1419,12 +1364,13 @@ class @Parser
             
             node.value_array.pop()
           if chk_len == stack.length
-            stack[chk_len-1][0] = 34
-        when 34
+            stack[chk_len-1][0] = 28
+        when 28
           ### rule_Hhash_id_XX_Hnumber_XX_priorityEX9000_ultEhash_array_access__u19 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           list_1 = FAcache[b_0][5]
@@ -1435,21 +1381,27 @@ class @Parser
             b_1 = tok.b
             node.value_array.push tok
             
-            continue if b_1 >= length
+            if b_1 >= length
+              node.value_array.pop()
+              continue
             list_2 = FAcache[b_1][0]
             for tok in list_2
               continue if tok.value != "["
               b_2 = tok.b
               node.value_array.push tok
               
-              continue if b_2 >= length
+              if b_2 >= length
+                node.value_array.pop()
+                continue
               list_3 = FAcache[b_2][7]
               for tok in list_3
                 
                 b_3 = tok.b
                 node.value_array.push tok
                 
-                continue if b_3 >= length
+                if b_3 >= length
+                  node.value_array.pop()
+                  continue
                 list_4 = FAcache[b_3][0]
                 for tok in list_4
                   continue if tok.value != "]"
@@ -1479,18 +1431,21 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][33] ?= []
-          FAcache[start_pos][33].append ret_list
-        when 38
+          if FAcache[start_pos][27]?
+            FAcache[start_pos][27].append ret_list
+          else
+            FAcache[start_pos][27] = ret_list
+        when 32
           ### rule_Haccess_rvalue_priorityEX9000_ultEaccess_rvalue__u10 queue ###
           chk_len = stack.push [
-            38
+            32
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           list_1 = FAcache[b_0][3]
           if !list_1
@@ -1502,12 +1457,13 @@ class @Parser
             continue
           
           if chk_len == stack.length
-            stack[chk_len-1][0] = 39
-        when 39
+            stack[chk_len-1][0] = 33
+        when 33
           ### rule_Haccess_rvalue_priorityEX9000_ultEaccess_rvalue__u10 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           list_1 = FAcache[b_0][3]
@@ -1535,18 +1491,21 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][38] ?= []
-          FAcache[start_pos][38].append ret_list
-        when 40
+          if FAcache[start_pos][32]?
+            FAcache[start_pos][32].append ret_list
+          else
+            FAcache[start_pos][32] = ret_list
+        when 34
           ### rule_Hnumber_priorityEX9000_ultEvalue__u11 queue ###
           chk_len = stack.push [
-            40
+            34
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           list_1 = FAcache[b_0][7]
           if !list_1
@@ -1558,12 +1517,13 @@ class @Parser
             continue
           
           if chk_len == stack.length
-            stack[chk_len-1][0] = 41
-        when 41
+            stack[chk_len-1][0] = 35
+        when 35
           ### rule_Hnumber_priorityEX9000_ultEvalue__u11 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           list_1 = FAcache[b_0][7]
@@ -1591,18 +1551,21 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][40] ?= []
-          FAcache[start_pos][40].append ret_list
-        when 42
+          if FAcache[start_pos][34]?
+            FAcache[start_pos][34].append ret_list
+          else
+            FAcache[start_pos][34] = ret_list
+        when 36
           ### rule_Hid_priorityEX9000_ultEwrap_string__u12 queue ###
           chk_len = stack.push [
-            42
+            36
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           list_1 = FAcache[b_0][8]
           if !list_1
@@ -1614,12 +1577,13 @@ class @Parser
             continue
           
           if chk_len == stack.length
-            stack[chk_len-1][0] = 43
-        when 43
+            stack[chk_len-1][0] = 37
+        when 37
           ### rule_Hid_priorityEX9000_ultEwrap_string__u12 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           list_1 = FAcache[b_0][8]
@@ -1647,18 +1611,21 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][42] ?= []
-          FAcache[start_pos][42].append ret_list
-        when 44
+          if FAcache[start_pos][36]?
+            FAcache[start_pos][36].append ret_list
+          else
+            FAcache[start_pos][36] = ret_list
+        when 38
           ### rule_Hstring_literal_singleq_priorityEX9000_ultEvalue__u13 queue ###
           chk_len = stack.push [
-            44
+            38
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           list_1 = FAcache[b_0][9]
           if !list_1
@@ -1670,12 +1637,13 @@ class @Parser
             continue
           
           if chk_len == stack.length
-            stack[chk_len-1][0] = 45
-        when 45
+            stack[chk_len-1][0] = 39
+        when 39
           ### rule_Hstring_literal_singleq_priorityEX9000_ultEvalue__u13 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           list_1 = FAcache[b_0][9]
@@ -1703,18 +1671,21 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][44] ?= []
-          FAcache[start_pos][44].append ret_list
-        when 46
+          if FAcache[start_pos][38]?
+            FAcache[start_pos][38].append ret_list
+          else
+            FAcache[start_pos][38] = ret_list
+        when 40
           ### rule_Hstring_literal_doubleq_priorityEX9000_ultEvalue__u14 queue ###
           chk_len = stack.push [
-            46
+            40
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           list_1 = FAcache[b_0][10]
           if !list_1
@@ -1726,12 +1697,13 @@ class @Parser
             continue
           
           if chk_len == stack.length
-            stack[chk_len-1][0] = 47
-        when 47
+            stack[chk_len-1][0] = 41
+        when 41
           ### rule_Hstring_literal_doubleq_priorityEX9000_ultEvalue__u14 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           list_1 = FAcache[b_0][10]
@@ -1759,18 +1731,21 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][46] ?= []
-          FAcache[start_pos][46].append ret_list
-        when 48
+          if FAcache[start_pos][40]?
+            FAcache[start_pos][40].append ret_list
+          else
+            FAcache[start_pos][40] = ret_list
+        when 42
           ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityXHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_u15 queue ###
           chk_len = stack.push [
-            48
+            42
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           list_1 = FAcache[b_0][6]
           if !list_1
@@ -1787,7 +1762,9 @@ class @Parser
             b_1 = tok.b
             node.value_array.push tok
             
-            continue if b_1 >= length
+            if b_1 >= length
+              node.value_array.pop()
+              continue
             list_2 = FAcache[b_1][2]
             if !list_2
               stack.push [
@@ -1801,7 +1778,9 @@ class @Parser
               b_2 = tok.b
               node.value_array.push tok
               
-              continue if b_2 >= length
+              if b_2 >= length
+                node.value_array.pop()
+                continue
               list_3 = FAcache[b_2][6]
               if !list_3
                 stack.push [
@@ -1816,12 +1795,13 @@ class @Parser
             
             node.value_array.pop()
           if chk_len == stack.length
-            stack[chk_len-1][0] = 49
-        when 49
+            stack[chk_len-1][0] = 43
+        when 43
           ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityXHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_u15 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           list_1 = FAcache[b_0][6]
@@ -1832,14 +1812,18 @@ class @Parser
             b_1 = tok.b
             node.value_array.push tok
             
-            continue if b_1 >= length
+            if b_1 >= length
+              node.value_array.pop()
+              continue
             list_2 = FAcache[b_1][2]
             for tok in list_2
               
               b_2 = tok.b
               node.value_array.push tok
               
-              continue if b_2 >= length
+              if b_2 >= length
+                node.value_array.pop()
+                continue
               list_3 = FAcache[b_2][6]
               for tok in list_3
                 
@@ -1872,18 +1856,21 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][48] ?= []
-          FAcache[start_pos][48].append ret_list
-        when 50
+          if FAcache[start_pos][42]?
+            FAcache[start_pos][42].append ret_list
+          else
+            FAcache[start_pos][42] = ret_list
+        when 44
           ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16 queue ###
           chk_len = stack.push [
-            50
+            44
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           list_1 = FAcache[b_0][6]
           if !list_1
@@ -1900,7 +1887,9 @@ class @Parser
             b_1 = tok.b
             node.value_array.push tok
             
-            continue if b_1 >= length
+            if b_1 >= length
+              node.value_array.pop()
+              continue
             list_2 = FAcache[b_1][2]
             if !list_2
               stack.push [
@@ -1914,7 +1903,9 @@ class @Parser
               b_2 = tok.b
               node.value_array.push tok
               
-              continue if b_2 >= length
+              if b_2 >= length
+                node.value_array.pop()
+                continue
               list_3 = FAcache[b_2][6]
               if !list_3
                 stack.push [
@@ -1929,12 +1920,13 @@ class @Parser
             
             node.value_array.pop()
           if chk_len == stack.length
-            stack[chk_len-1][0] = 51
-        when 51
+            stack[chk_len-1][0] = 45
+        when 45
           ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           list_1 = FAcache[b_0][6]
@@ -1945,14 +1937,18 @@ class @Parser
             b_1 = tok.b
             node.value_array.push tok
             
-            continue if b_1 >= length
+            if b_1 >= length
+              node.value_array.pop()
+              continue
             list_2 = FAcache[b_1][2]
             for tok in list_2
               
               b_2 = tok.b
               node.value_array.push tok
               
-              continue if b_2 >= length
+              if b_2 >= length
+                node.value_array.pop()
+                continue
               list_3 = FAcache[b_2][6]
               for tok in list_3
                 
@@ -1988,18 +1984,21 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][50] ?= []
-          FAcache[start_pos][50].append ret_list
-        when 52
+          if FAcache[start_pos][44]?
+            FAcache[start_pos][44].append ret_list
+          else
+            FAcache[start_pos][44] = ret_list
+        when 46
           ### rule_Hpre_op_Hrvalue_priorityEHpre_opXpriority_ultEpre_op_HrvalueX1XXpriorityXEHpre_opXpriority_u17 queue ###
           chk_len = stack.push [
-            52
+            46
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           list_1 = FAcache[b_0][1]
           if !list_1
@@ -2016,7 +2015,9 @@ class @Parser
             b_1 = tok.b
             node.value_array.push tok
             
-            continue if b_1 >= length
+            if b_1 >= length
+              node.value_array.pop()
+              continue
             list_2 = FAcache[b_1][6]
             if !list_2
               stack.push [
@@ -2029,12 +2030,13 @@ class @Parser
             
             node.value_array.pop()
           if chk_len == stack.length
-            stack[chk_len-1][0] = 53
-        when 53
+            stack[chk_len-1][0] = 47
+        when 47
           ### rule_Hpre_op_Hrvalue_priorityEHpre_opXpriority_ultEpre_op_HrvalueX1XXpriorityXEHpre_opXpriority_u17 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           list_1 = FAcache[b_0][1]
@@ -2045,7 +2047,9 @@ class @Parser
             b_1 = tok.b
             node.value_array.push tok
             
-            continue if b_1 >= length
+            if b_1 >= length
+              node.value_array.pop()
+              continue
             list_2 = FAcache[b_1][6]
             for tok in list_2
               
@@ -2073,18 +2077,21 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][52] ?= []
-          FAcache[start_pos][52].append ret_list
-        when 54
+          if FAcache[start_pos][46]?
+            FAcache[start_pos][46].append ret_list
+          else
+            FAcache[start_pos][46] = ret_list
+        when 48
           ### rule_XX_Hrvalue_XX_priorityEX9000_ultEbra__u18 queue ###
           chk_len = stack.push [
-            54
+            48
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           list_1 = FAcache[b_0][0]
           for tok in list_1
@@ -2094,7 +2101,9 @@ class @Parser
             b_1 = tok.b
             node.value_array.push tok
             
-            continue if b_1 >= length
+            if b_1 >= length
+              node.value_array.pop()
+              continue
             list_2 = FAcache[b_1][6]
             if !list_2
               stack.push [
@@ -2107,12 +2116,13 @@ class @Parser
             
             node.value_array.pop()
           if chk_len == stack.length
-            stack[chk_len-1][0] = 55
-        when 55
+            stack[chk_len-1][0] = 49
+        when 49
           ### rule_XX_Hrvalue_XX_priorityEX9000_ultEbra__u18 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           list_1 = FAcache[b_0][0]
@@ -2123,14 +2133,18 @@ class @Parser
             b_1 = tok.b
             node.value_array.push tok
             
-            continue if b_1 >= length
+            if b_1 >= length
+              node.value_array.pop()
+              continue
             list_2 = FAcache[b_1][6]
             for tok in list_2
               
               b_2 = tok.b
               node.value_array.push tok
               
-              continue if b_2 >= length
+              if b_2 >= length
+                node.value_array.pop()
+                continue
               list_3 = FAcache[b_2][0]
               for tok in list_3
                 continue if tok.value != ")"
@@ -2158,18 +2172,21 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][54] ?= []
-          FAcache[start_pos][54].append ret_list
-        when 56
+          if FAcache[start_pos][48]?
+            FAcache[start_pos][48].append ret_list
+          else
+            FAcache[start_pos][48] = ret_list
+        when 50
           ### rule_Haccess_rvalue_XX_Hnumber_XX_Hnumber_XX_priorityEX9000_ultEslice_access__u20 queue ###
           chk_len = stack.push [
-            56
+            50
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           list_1 = FAcache[b_0][3]
           if !list_1
@@ -2186,14 +2203,18 @@ class @Parser
             b_1 = tok.b
             node.value_array.push tok
             
-            continue if b_1 >= length
+            if b_1 >= length
+              node.value_array.pop()
+              continue
             list_2 = FAcache[b_1][0]
             for tok in list_2
               continue if tok.value != "["
               b_2 = tok.b
               node.value_array.push tok
               
-              continue if b_2 >= length
+              if b_2 >= length
+                node.value_array.pop()
+                continue
               list_3 = FAcache[b_2][7]
               if !list_3
                 stack.push [
@@ -2207,14 +2228,18 @@ class @Parser
                 b_3 = tok.b
                 node.value_array.push tok
                 
-                continue if b_3 >= length
+                if b_3 >= length
+                  node.value_array.pop()
+                  continue
                 list_4 = FAcache[b_3][0]
                 for tok in list_4
                   continue if tok.value != ":"
                   b_4 = tok.b
                   node.value_array.push tok
                   
-                  continue if b_4 >= length
+                  if b_4 >= length
+                    node.value_array.pop()
+                    continue
                   list_5 = FAcache[b_4][7]
                   if !list_5
                     stack.push [
@@ -2233,12 +2258,13 @@ class @Parser
             
             node.value_array.pop()
           if chk_len == stack.length
-            stack[chk_len-1][0] = 57
-        when 57
+            stack[chk_len-1][0] = 51
+        when 51
           ### rule_Haccess_rvalue_XX_Hnumber_XX_Hnumber_XX_priorityEX9000_ultEslice_access__u20 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           list_1 = FAcache[b_0][3]
@@ -2249,35 +2275,45 @@ class @Parser
             b_1 = tok.b
             node.value_array.push tok
             
-            continue if b_1 >= length
+            if b_1 >= length
+              node.value_array.pop()
+              continue
             list_2 = FAcache[b_1][0]
             for tok in list_2
               continue if tok.value != "["
               b_2 = tok.b
               node.value_array.push tok
               
-              continue if b_2 >= length
+              if b_2 >= length
+                node.value_array.pop()
+                continue
               list_3 = FAcache[b_2][7]
               for tok in list_3
                 
                 b_3 = tok.b
                 node.value_array.push tok
                 
-                continue if b_3 >= length
+                if b_3 >= length
+                  node.value_array.pop()
+                  continue
                 list_4 = FAcache[b_3][0]
                 for tok in list_4
                   continue if tok.value != ":"
                   b_4 = tok.b
                   node.value_array.push tok
                   
-                  continue if b_4 >= length
+                  if b_4 >= length
+                    node.value_array.pop()
+                    continue
                   list_5 = FAcache[b_4][7]
                   for tok in list_5
                     
                     b_5 = tok.b
                     node.value_array.push tok
                     
-                    continue if b_5 >= length
+                    if b_5 >= length
+                      node.value_array.pop()
+                      continue
                     list_6 = FAcache[b_5][0]
                     for tok in list_6
                       continue if tok.value != "]"
@@ -2311,18 +2347,21 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][56] ?= []
-          FAcache[start_pos][56].append ret_list
-        when 58
+          if FAcache[start_pos][50]?
+            FAcache[start_pos][50].append ret_list
+          else
+            FAcache[start_pos][50] = ret_list
+        when 52
           ### rule_Haccess_rvalue_XX_Hid_priorityEX9000_ultEfield_access__u21 queue ###
           chk_len = stack.push [
-            58
+            52
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           list_1 = FAcache[b_0][3]
           if !list_1
@@ -2339,14 +2378,18 @@ class @Parser
             b_1 = tok.b
             node.value_array.push tok
             
-            continue if b_1 >= length
+            if b_1 >= length
+              node.value_array.pop()
+              continue
             list_2 = FAcache[b_1][0]
             for tok in list_2
               continue if tok.value != "."
               b_2 = tok.b
               node.value_array.push tok
               
-              continue if b_2 >= length
+              if b_2 >= length
+                node.value_array.pop()
+                continue
               list_3 = FAcache[b_2][8]
               if !list_3
                 stack.push [
@@ -2361,12 +2404,13 @@ class @Parser
             
             node.value_array.pop()
           if chk_len == stack.length
-            stack[chk_len-1][0] = 59
-        when 59
+            stack[chk_len-1][0] = 53
+        when 53
           ### rule_Haccess_rvalue_XX_Hid_priorityEX9000_ultEfield_access__u21 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           list_1 = FAcache[b_0][3]
@@ -2377,14 +2421,18 @@ class @Parser
             b_1 = tok.b
             node.value_array.push tok
             
-            continue if b_1 >= length
+            if b_1 >= length
+              node.value_array.pop()
+              continue
             list_2 = FAcache[b_1][0]
             for tok in list_2
               continue if tok.value != "."
               b_2 = tok.b
               node.value_array.push tok
               
-              continue if b_2 >= length
+              if b_2 >= length
+                node.value_array.pop()
+                continue
               list_3 = FAcache[b_2][8]
               for tok in list_3
                 
@@ -2412,18 +2460,21 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          FAcache[start_pos][58] ?= []
-          FAcache[start_pos][58].append ret_list
-        when 65
+          if FAcache[start_pos][52]?
+            FAcache[start_pos][52].append ret_list
+          else
+            FAcache[start_pos][52] = ret_list
+        when 59
           ### rule_Hrvalue_ultEdeep__u22 queue ###
           chk_len = stack.push [
-            65
+            59
             start_pos
             only_new
           ]
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           
           list_1 = FAcache[b_0][6]
           if !list_1
@@ -2435,12 +2486,13 @@ class @Parser
             continue
           
           if chk_len == stack.length
-            stack[chk_len-1][0] = 66
-        when 66
+            stack[chk_len-1][0] = 60
+        when 60
           ### rule_Hrvalue_ultEdeep__u22 collect ###
           ret_list = []
           b_0 = start_pos
-          node = new @Node
+          node = @proxy2
+          node.value_array.clear()
           node.a = start_pos
           
           list_1 = FAcache[b_0][6]
@@ -2467,8 +2519,10 @@ class @Parser
             
             
             node.value_array.pop()
-          FAcache[start_pos][65] ?= []
-          FAcache[start_pos][65].append ret_list
+          if FAcache[start_pos][59]?
+            FAcache[start_pos][59].append ret_list
+          else
+            FAcache[start_pos][59] = ret_list
     
     FAcache[start_pos][11]
 
