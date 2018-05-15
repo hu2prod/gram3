@@ -54,10 +54,13 @@ tokenizer.parser_list.push (new Token_parser 'number', /^[0-9]+/)
 # ###################################################################################################
 
 require 'fy'
-drop_stub = []
+STATE_NA = 0
+STATE_RQ = 1 # REQ
+STATE_IG = 2 # REQ_IGNORE
+STATE_FL = 3 # REQ_FILL
+state_stub = []
 for i in [0 ... 12]
-  drop_stub.push 0
-cache_stub = new Array 62
+  state_stub.push STATE_NA
 
 hash_key_list = [
   "_",
@@ -77,29 +80,31 @@ hash_key_list = [
 class @Parser
   length: 0
   cache : []
-  drop  : []
+  state : []
   Node  : null
   proxy : null
   proxy2: null
   
   go : (token_list_list)->
     @cache= []
-    @drop = []
+    @state= []
     @length = token_list_list.length
     return [] if @length == 0
     @Node = token_list_list[0]?[0]?.constructor
     @proxy= new @Node
     @proxy2= new @Node
     for token_list,idx in token_list_list
-      stub = cache_stub.slice()
+      stub = new Array 62
+      for k in [0 ... 62]
+        stub[k] = []
       for token in token_list
         token.a = idx
         token.b = idx+1
         if -1 != stub_idx = hash_key_list.idx token.mx_hash.hash_key
-          stub[stub_idx] = [token]
-        stub[0] = [token]
+          stub[stub_idx].push token
+        stub[0].push token
       @cache.push stub
-      @drop.push drop_stub.slice()
+      @state.push state_stub.slice()
     
     # one const rule opt
     for token_list,idx in token_list_list
@@ -205,7 +210,7 @@ class @Parser
 
   fsm : ()->
     FAcache = @cache
-    FAdrop = @drop
+    FAstate = @state
     stack = [
       [
         11
@@ -213,7 +218,29 @@ class @Parser
         0
       ]
     ]
+    FAstate[0][11] = STATE_RQ
     length = @length
+    request_make = (token_hki, pos, is_new)->
+      state = FAstate[pos][token_hki]
+      switch state
+        when 0 # STATE_NA
+          if is_new
+            ### !pragma coverage-skip-block ###
+            throw new Error 'invalid call. STATE_NA + is_new'
+          stack.push [token_hki, pos, is_new]
+          FAstate[pos][token_hki] = STATE_RQ
+          return true
+        when 1 # STATE_RQ
+          FAstate[pos][token_hki] = STATE_IG
+          return false
+        when 2 # STATE_IG
+          # stack.push [token_hki, pos, is_new]
+          return false
+        when 3 # STATE_FL
+          FAstate[pos][token_hki] = STATE_RQ
+          stack.push [token_hki, pos, is_new]
+          return true
+      return
     
     while cur = stack.pop()
       [
@@ -222,13 +249,10 @@ class @Parser
         only_new
       ] = cur
       continue if start_pos >= length
-      if !only_new
-        continue if list = FAcache[start_pos][hki]
       
       switch hki
         when 0
           ### token__ queue ###
-          
           stack.push [
             12
             start_pos
@@ -238,11 +262,11 @@ class @Parser
           ### token__ collect ###
           node_list = []
           
-          FAcache[start_pos][0] = node_list
+          FAstate[start_pos][0] = STATE_FL
+          FAcache[start_pos][0].append node_list
         
         when 1
           ### token_pre_op queue ###
-          
           stack.push [
             13
             start_pos
@@ -252,11 +276,11 @@ class @Parser
           ### token_pre_op collect ###
           node_list = []
           
-          FAcache[start_pos][1] = node_list
+          FAstate[start_pos][1] = STATE_FL
+          FAcache[start_pos][1].append node_list
         
         when 2
           ### token_bin_op queue ###
-          
           stack.push [
             22
             start_pos
@@ -297,11 +321,11 @@ class @Parser
           node_list.append FAcache[start_pos][18]
           ### rule_XXXXXXXXXXXXXXXXX_priorityE10_right_assocE1__u7 ###
           node_list.append FAcache[start_pos][20]
-          FAcache[start_pos][2] = node_list
+          FAstate[start_pos][2] = STATE_FL
+          FAcache[start_pos][2].append node_list
         
         when 3
           ### token_access_rvalue queue ###
-          
           stack.push [
             29
             start_pos
@@ -334,11 +358,11 @@ class @Parser
           node_list.append FAcache[start_pos][25]
           ### rule_Hhash_id_XX_Hnumber_XX_priorityEX9000_ultEhash_array_access__u19 ###
           node_list.append FAcache[start_pos][27]
-          FAcache[start_pos][3] = node_list
+          FAstate[start_pos][3] = STATE_FL
+          FAcache[start_pos][3].append node_list
         
         when 4
           ### token_dollar_id queue ###
-          
           stack.push [
             30
             start_pos
@@ -348,11 +372,11 @@ class @Parser
           ### token_dollar_id collect ###
           node_list = []
           
-          FAcache[start_pos][4] = node_list
+          FAstate[start_pos][4] = STATE_FL
+          FAcache[start_pos][4].append node_list
         
         when 5
           ### token_hash_id queue ###
-          
           stack.push [
             31
             start_pos
@@ -362,15 +386,11 @@ class @Parser
           ### token_hash_id collect ###
           node_list = []
           
-          FAcache[start_pos][5] = node_list
+          FAstate[start_pos][5] = STATE_FL
+          FAcache[start_pos][5].append node_list
         
         when 6
           ### token_rvalue queue ###
-          if FAdrop[start_pos][6]
-            if !FAcache[start_pos][6]?
-              FAcache[start_pos][6] = []
-            continue
-          FAdrop[start_pos][6] = 1
           stack.push [
             54
             start_pos
@@ -469,21 +489,17 @@ class @Parser
           node_list.append FAcache[start_pos][52]
           for node in node_list
             node._is_new = true
-          if append_list = FAcache[start_pos][6]
-            for node in append_list
-              node._is_new = false
-            append_list.uappend node_list
-          else
-            FAcache[start_pos][6] = node_list
-          if FAdrop[start_pos][6]
+          append_list = FAcache[start_pos][6]
+          for node in append_list
+            node._is_new = false
+          append_list.uappend node_list
+          
+          state = FAstate[start_pos][6]
+          FAstate[start_pos][6] = STATE_FL
+          if state == STATE_IG
             if node_list.last()?._is_new
               # recursive case
-              FAdrop[start_pos][3] = 0
-              FAdrop[start_pos][7] = 0
-              FAdrop[start_pos][8] = 0
-              FAdrop[start_pos][9] = 0
-              FAdrop[start_pos][10] = 0
-              FAdrop[start_pos][1] = 0
+              FAstate[start_pos][6] = STATE_RQ
               stack.push [
                 54
                 start_pos
@@ -501,15 +517,11 @@ class @Parser
                 start_pos
                 1
               ]
-              stack.push [
-                6
-                start_pos
-                1
-              ]
+              request_make 6, start_pos, 1
+          
         
         when 7
           ### token_number queue ###
-          
           stack.push [
             55
             start_pos
@@ -519,11 +531,11 @@ class @Parser
           ### token_number collect ###
           node_list = []
           
-          FAcache[start_pos][7] = node_list
+          FAstate[start_pos][7] = STATE_FL
+          FAcache[start_pos][7].append node_list
         
         when 8
           ### token_id queue ###
-          
           stack.push [
             56
             start_pos
@@ -533,11 +545,11 @@ class @Parser
           ### token_id collect ###
           node_list = []
           
-          FAcache[start_pos][8] = node_list
+          FAstate[start_pos][8] = STATE_FL
+          FAcache[start_pos][8].append node_list
         
         when 9
           ### token_string_literal_singleq queue ###
-          
           stack.push [
             57
             start_pos
@@ -547,11 +559,11 @@ class @Parser
           ### token_string_literal_singleq collect ###
           node_list = []
           
-          FAcache[start_pos][9] = node_list
+          FAstate[start_pos][9] = STATE_FL
+          FAcache[start_pos][9].append node_list
         
         when 10
           ### token_string_literal_doubleq queue ###
-          
           stack.push [
             58
             start_pos
@@ -561,11 +573,11 @@ class @Parser
           ### token_string_literal_doubleq collect ###
           node_list = []
           
-          FAcache[start_pos][10] = node_list
+          FAstate[start_pos][10] = STATE_FL
+          FAcache[start_pos][10].append node_list
         
         when 11
           ### token_strict_rule queue ###
-          
           stack.push [
             61
             start_pos
@@ -582,7 +594,8 @@ class @Parser
           node_list = []
           ### rule_Hrvalue_ultEdeep__u22 ###
           node_list.append FAcache[start_pos][59]
-          FAcache[start_pos][11] = node_list
+          FAstate[start_pos][11] = STATE_FL
+          FAcache[start_pos][11].append node_list
         
         when 14
           ### rule_XSXXX_priorityE5__right_assocE1__u4 queue ###
@@ -690,10 +703,7 @@ class @Parser
             
             
             node.value_array.length -= tok_list.length
-          if FAcache[start_pos][14]?
-            FAcache[start_pos][14].append ret_list
-          else
-            FAcache[start_pos][14] = ret_list
+          FAcache[start_pos][14].append ret_list
         when 16
           ### rule_XPXXX_priorityE6__right_assocE1__u5 queue ###
           chk_len = stack.push [
@@ -800,10 +810,7 @@ class @Parser
             
             
             node.value_array.length -= tok_list.length
-          if FAcache[start_pos][16]?
-            FAcache[start_pos][16].append ret_list
-          else
-            FAcache[start_pos][16] = ret_list
+          FAcache[start_pos][16].append ret_list
         when 18
           ### rule_XXXXXXEXXXXXXXXEXXXXEXXXXXXXXEEX_priorityE9__u6 queue ###
           chk_len = stack.push [
@@ -1029,10 +1036,7 @@ class @Parser
             
             
             node.value_array.length -= tok_list.length
-          if FAcache[start_pos][18]?
-            FAcache[start_pos][18].append ret_list
-          else
-            FAcache[start_pos][18] = ret_list
+          FAcache[start_pos][18].append ret_list
         when 20
           ### rule_XXXXXXXXXXXXXXXXX_priorityE10_right_assocE1__u7 queue ###
           chk_len = stack.push [
@@ -1187,10 +1191,7 @@ class @Parser
             
             
             node.value_array.length -= tok_list.length
-          if FAcache[start_pos][20]?
-            FAcache[start_pos][20].append ret_list
-          else
-            FAcache[start_pos][20] = ret_list
+          FAcache[start_pos][20].append ret_list
         when 23
           ### rule_Hdollar_id_priorityEX9000_ultEdollar_id__u8 queue ###
           chk_len = stack.push [
@@ -1203,14 +1204,11 @@ class @Parser
           node = @proxy2
           node.value_array.clear()
           
+          state_1 = FAstate[b_0][4]
+          if state_1 != STATE_FL
+            if request_make 4, b_0, 0
+              continue
           list_1 = FAcache[b_0][4]
-          if !list_1
-            stack.push [
-              4
-              b_0
-              0
-            ]
-            continue
           
           if chk_len == stack.length
             stack[chk_len-1][0] = 24
@@ -1247,10 +1245,7 @@ class @Parser
             
             
             node.value_array.pop()
-          if FAcache[start_pos][23]?
-            FAcache[start_pos][23].append ret_list
-          else
-            FAcache[start_pos][23] = ret_list
+          FAcache[start_pos][23].append ret_list
         when 25
           ### rule_Hhash_id_priorityEX9000_ultEhash_id__u9 queue ###
           chk_len = stack.push [
@@ -1263,14 +1258,11 @@ class @Parser
           node = @proxy2
           node.value_array.clear()
           
+          state_1 = FAstate[b_0][5]
+          if state_1 != STATE_FL
+            if request_make 5, b_0, 0
+              continue
           list_1 = FAcache[b_0][5]
-          if !list_1
-            stack.push [
-              5
-              b_0
-              0
-            ]
-            continue
           
           if chk_len == stack.length
             stack[chk_len-1][0] = 26
@@ -1307,10 +1299,7 @@ class @Parser
             
             
             node.value_array.pop()
-          if FAcache[start_pos][25]?
-            FAcache[start_pos][25].append ret_list
-          else
-            FAcache[start_pos][25] = ret_list
+          FAcache[start_pos][25].append ret_list
         when 27
           ### rule_Hhash_id_XX_Hnumber_XX_priorityEX9000_ultEhash_array_access__u19 queue ###
           chk_len = stack.push [
@@ -1323,14 +1312,11 @@ class @Parser
           node = @proxy2
           node.value_array.clear()
           
+          state_1 = FAstate[b_0][5]
+          if state_1 != STATE_FL
+            if request_make 5, b_0, 0
+              continue
           list_1 = FAcache[b_0][5]
-          if !list_1
-            stack.push [
-              5
-              b_0
-              0
-            ]
-            continue
           for tok in list_1
             if only_new
               continue if !tok._is_new
@@ -1350,14 +1336,11 @@ class @Parser
               if b_2 >= length
                 node.value_array.pop()
                 continue
+              state_3 = FAstate[b_2][7]
+              if state_3 != STATE_FL
+                if request_make 7, b_2, 0
+                  continue
               list_3 = FAcache[b_2][7]
-              if !list_3
-                stack.push [
-                  7
-                  b_2
-                  0
-                ]
-                continue
               
               
               node.value_array.pop()
@@ -1431,10 +1414,7 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          if FAcache[start_pos][27]?
-            FAcache[start_pos][27].append ret_list
-          else
-            FAcache[start_pos][27] = ret_list
+          FAcache[start_pos][27].append ret_list
         when 32
           ### rule_Haccess_rvalue_priorityEX9000_ultEaccess_rvalue__u10 queue ###
           chk_len = stack.push [
@@ -1447,14 +1427,11 @@ class @Parser
           node = @proxy2
           node.value_array.clear()
           
+          state_1 = FAstate[b_0][3]
+          if state_1 != STATE_FL
+            if request_make 3, b_0, 0
+              continue
           list_1 = FAcache[b_0][3]
-          if !list_1
-            stack.push [
-              3
-              b_0
-              0
-            ]
-            continue
           
           if chk_len == stack.length
             stack[chk_len-1][0] = 33
@@ -1491,10 +1468,7 @@ class @Parser
             
             
             node.value_array.pop()
-          if FAcache[start_pos][32]?
-            FAcache[start_pos][32].append ret_list
-          else
-            FAcache[start_pos][32] = ret_list
+          FAcache[start_pos][32].append ret_list
         when 34
           ### rule_Hnumber_priorityEX9000_ultEvalue__u11 queue ###
           chk_len = stack.push [
@@ -1507,14 +1481,11 @@ class @Parser
           node = @proxy2
           node.value_array.clear()
           
+          state_1 = FAstate[b_0][7]
+          if state_1 != STATE_FL
+            if request_make 7, b_0, 0
+              continue
           list_1 = FAcache[b_0][7]
-          if !list_1
-            stack.push [
-              7
-              b_0
-              0
-            ]
-            continue
           
           if chk_len == stack.length
             stack[chk_len-1][0] = 35
@@ -1551,10 +1522,7 @@ class @Parser
             
             
             node.value_array.pop()
-          if FAcache[start_pos][34]?
-            FAcache[start_pos][34].append ret_list
-          else
-            FAcache[start_pos][34] = ret_list
+          FAcache[start_pos][34].append ret_list
         when 36
           ### rule_Hid_priorityEX9000_ultEwrap_string__u12 queue ###
           chk_len = stack.push [
@@ -1567,14 +1535,11 @@ class @Parser
           node = @proxy2
           node.value_array.clear()
           
+          state_1 = FAstate[b_0][8]
+          if state_1 != STATE_FL
+            if request_make 8, b_0, 0
+              continue
           list_1 = FAcache[b_0][8]
-          if !list_1
-            stack.push [
-              8
-              b_0
-              0
-            ]
-            continue
           
           if chk_len == stack.length
             stack[chk_len-1][0] = 37
@@ -1611,10 +1576,7 @@ class @Parser
             
             
             node.value_array.pop()
-          if FAcache[start_pos][36]?
-            FAcache[start_pos][36].append ret_list
-          else
-            FAcache[start_pos][36] = ret_list
+          FAcache[start_pos][36].append ret_list
         when 38
           ### rule_Hstring_literal_singleq_priorityEX9000_ultEvalue__u13 queue ###
           chk_len = stack.push [
@@ -1627,14 +1589,11 @@ class @Parser
           node = @proxy2
           node.value_array.clear()
           
+          state_1 = FAstate[b_0][9]
+          if state_1 != STATE_FL
+            if request_make 9, b_0, 0
+              continue
           list_1 = FAcache[b_0][9]
-          if !list_1
-            stack.push [
-              9
-              b_0
-              0
-            ]
-            continue
           
           if chk_len == stack.length
             stack[chk_len-1][0] = 39
@@ -1671,10 +1630,7 @@ class @Parser
             
             
             node.value_array.pop()
-          if FAcache[start_pos][38]?
-            FAcache[start_pos][38].append ret_list
-          else
-            FAcache[start_pos][38] = ret_list
+          FAcache[start_pos][38].append ret_list
         when 40
           ### rule_Hstring_literal_doubleq_priorityEX9000_ultEvalue__u14 queue ###
           chk_len = stack.push [
@@ -1687,14 +1643,11 @@ class @Parser
           node = @proxy2
           node.value_array.clear()
           
+          state_1 = FAstate[b_0][10]
+          if state_1 != STATE_FL
+            if request_make 10, b_0, 0
+              continue
           list_1 = FAcache[b_0][10]
-          if !list_1
-            stack.push [
-              10
-              b_0
-              0
-            ]
-            continue
           
           if chk_len == stack.length
             stack[chk_len-1][0] = 41
@@ -1731,10 +1684,7 @@ class @Parser
             
             
             node.value_array.pop()
-          if FAcache[start_pos][40]?
-            FAcache[start_pos][40].append ret_list
-          else
-            FAcache[start_pos][40] = ret_list
+          FAcache[start_pos][40].append ret_list
         when 42
           ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityXHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_u15 queue ###
           chk_len = stack.push [
@@ -1747,14 +1697,11 @@ class @Parser
           node = @proxy2
           node.value_array.clear()
           
+          state_1 = FAstate[b_0][6]
+          if state_1 != STATE_FL
+            if request_make 6, b_0, 0
+              continue
           list_1 = FAcache[b_0][6]
-          if !list_1
-            stack.push [
-              6
-              b_0
-              0
-            ]
-            continue
           for tok in list_1
             if only_new
               continue if !tok._is_new
@@ -1765,14 +1712,11 @@ class @Parser
             if b_1 >= length
               node.value_array.pop()
               continue
+            state_2 = FAstate[b_1][2]
+            if state_2 != STATE_FL
+              if request_make 2, b_1, 0
+                continue
             list_2 = FAcache[b_1][2]
-            if !list_2
-              stack.push [
-                2
-                b_1
-                0
-              ]
-              continue
             for tok in list_2
               
               b_2 = tok.b
@@ -1781,14 +1725,11 @@ class @Parser
               if b_2 >= length
                 node.value_array.pop()
                 continue
+              state_3 = FAstate[b_2][6]
+              if state_3 != STATE_FL
+                if request_make 6, b_2, 0
+                  continue
               list_3 = FAcache[b_2][6]
-              if !list_3
-                stack.push [
-                  6
-                  b_2
-                  0
-                ]
-                continue
               
               
               node.value_array.pop()
@@ -1856,10 +1797,7 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          if FAcache[start_pos][42]?
-            FAcache[start_pos][42].append ret_list
-          else
-            FAcache[start_pos][42] = ret_list
+          FAcache[start_pos][42].append ret_list
         when 44
           ### rule_Hrvalue_Hbin_op_Hrvalue_priorityEHbin_opXpriority_ultEbin_op_HrvalueX1XXpriorityEEHbin_opXpriority_HrvalueX2XXpriorityXHbin_opXpriority_Hbin_opXright_assoc_u16 queue ###
           chk_len = stack.push [
@@ -1872,14 +1810,11 @@ class @Parser
           node = @proxy2
           node.value_array.clear()
           
+          state_1 = FAstate[b_0][6]
+          if state_1 != STATE_FL
+            if request_make 6, b_0, 0
+              continue
           list_1 = FAcache[b_0][6]
-          if !list_1
-            stack.push [
-              6
-              b_0
-              0
-            ]
-            continue
           for tok in list_1
             if only_new
               continue if !tok._is_new
@@ -1890,14 +1825,11 @@ class @Parser
             if b_1 >= length
               node.value_array.pop()
               continue
+            state_2 = FAstate[b_1][2]
+            if state_2 != STATE_FL
+              if request_make 2, b_1, 0
+                continue
             list_2 = FAcache[b_1][2]
-            if !list_2
-              stack.push [
-                2
-                b_1
-                0
-              ]
-              continue
             for tok in list_2
               
               b_2 = tok.b
@@ -1906,14 +1838,11 @@ class @Parser
               if b_2 >= length
                 node.value_array.pop()
                 continue
+              state_3 = FAstate[b_2][6]
+              if state_3 != STATE_FL
+                if request_make 6, b_2, 0
+                  continue
               list_3 = FAcache[b_2][6]
-              if !list_3
-                stack.push [
-                  6
-                  b_2
-                  0
-                ]
-                continue
               
               
               node.value_array.pop()
@@ -1984,10 +1913,7 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          if FAcache[start_pos][44]?
-            FAcache[start_pos][44].append ret_list
-          else
-            FAcache[start_pos][44] = ret_list
+          FAcache[start_pos][44].append ret_list
         when 46
           ### rule_Hpre_op_Hrvalue_priorityEHpre_opXpriority_ultEpre_op_HrvalueX1XXpriorityXEHpre_opXpriority_u17 queue ###
           chk_len = stack.push [
@@ -2000,14 +1926,11 @@ class @Parser
           node = @proxy2
           node.value_array.clear()
           
+          state_1 = FAstate[b_0][1]
+          if state_1 != STATE_FL
+            if request_make 1, b_0, 0
+              continue
           list_1 = FAcache[b_0][1]
-          if !list_1
-            stack.push [
-              1
-              b_0
-              0
-            ]
-            continue
           for tok in list_1
             if only_new
               continue if !tok._is_new
@@ -2018,14 +1941,11 @@ class @Parser
             if b_1 >= length
               node.value_array.pop()
               continue
+            state_2 = FAstate[b_1][6]
+            if state_2 != STATE_FL
+              if request_make 6, b_1, 0
+                continue
             list_2 = FAcache[b_1][6]
-            if !list_2
-              stack.push [
-                6
-                b_1
-                0
-              ]
-              continue
             
             
             node.value_array.pop()
@@ -2077,10 +1997,7 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          if FAcache[start_pos][46]?
-            FAcache[start_pos][46].append ret_list
-          else
-            FAcache[start_pos][46] = ret_list
+          FAcache[start_pos][46].append ret_list
         when 48
           ### rule_XX_Hrvalue_XX_priorityEX9000_ultEbra__u18 queue ###
           chk_len = stack.push [
@@ -2104,14 +2021,11 @@ class @Parser
             if b_1 >= length
               node.value_array.pop()
               continue
+            state_2 = FAstate[b_1][6]
+            if state_2 != STATE_FL
+              if request_make 6, b_1, 0
+                continue
             list_2 = FAcache[b_1][6]
-            if !list_2
-              stack.push [
-                6
-                b_1
-                0
-              ]
-              continue
             
             
             node.value_array.pop()
@@ -2172,10 +2086,7 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          if FAcache[start_pos][48]?
-            FAcache[start_pos][48].append ret_list
-          else
-            FAcache[start_pos][48] = ret_list
+          FAcache[start_pos][48].append ret_list
         when 50
           ### rule_Haccess_rvalue_XX_Hnumber_XX_Hnumber_XX_priorityEX9000_ultEslice_access__u20 queue ###
           chk_len = stack.push [
@@ -2188,14 +2099,11 @@ class @Parser
           node = @proxy2
           node.value_array.clear()
           
+          state_1 = FAstate[b_0][3]
+          if state_1 != STATE_FL
+            if request_make 3, b_0, 0
+              continue
           list_1 = FAcache[b_0][3]
-          if !list_1
-            stack.push [
-              3
-              b_0
-              0
-            ]
-            continue
           for tok in list_1
             if only_new
               continue if !tok._is_new
@@ -2215,14 +2123,11 @@ class @Parser
               if b_2 >= length
                 node.value_array.pop()
                 continue
+              state_3 = FAstate[b_2][7]
+              if state_3 != STATE_FL
+                if request_make 7, b_2, 0
+                  continue
               list_3 = FAcache[b_2][7]
-              if !list_3
-                stack.push [
-                  7
-                  b_2
-                  0
-                ]
-                continue
               for tok in list_3
                 
                 b_3 = tok.b
@@ -2240,14 +2145,11 @@ class @Parser
                   if b_4 >= length
                     node.value_array.pop()
                     continue
+                  state_5 = FAstate[b_4][7]
+                  if state_5 != STATE_FL
+                    if request_make 7, b_4, 0
+                      continue
                   list_5 = FAcache[b_4][7]
-                  if !list_5
-                    stack.push [
-                      7
-                      b_4
-                      0
-                    ]
-                    continue
                   
                   
                   node.value_array.pop()
@@ -2347,10 +2249,7 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          if FAcache[start_pos][50]?
-            FAcache[start_pos][50].append ret_list
-          else
-            FAcache[start_pos][50] = ret_list
+          FAcache[start_pos][50].append ret_list
         when 52
           ### rule_Haccess_rvalue_XX_Hid_priorityEX9000_ultEfield_access__u21 queue ###
           chk_len = stack.push [
@@ -2363,14 +2262,11 @@ class @Parser
           node = @proxy2
           node.value_array.clear()
           
+          state_1 = FAstate[b_0][3]
+          if state_1 != STATE_FL
+            if request_make 3, b_0, 0
+              continue
           list_1 = FAcache[b_0][3]
-          if !list_1
-            stack.push [
-              3
-              b_0
-              0
-            ]
-            continue
           for tok in list_1
             if only_new
               continue if !tok._is_new
@@ -2390,14 +2286,11 @@ class @Parser
               if b_2 >= length
                 node.value_array.pop()
                 continue
+              state_3 = FAstate[b_2][8]
+              if state_3 != STATE_FL
+                if request_make 8, b_2, 0
+                  continue
               list_3 = FAcache[b_2][8]
-              if !list_3
-                stack.push [
-                  8
-                  b_2
-                  0
-                ]
-                continue
               
               
               node.value_array.pop()
@@ -2460,10 +2353,7 @@ class @Parser
               node.value_array.pop()
             
             node.value_array.pop()
-          if FAcache[start_pos][52]?
-            FAcache[start_pos][52].append ret_list
-          else
-            FAcache[start_pos][52] = ret_list
+          FAcache[start_pos][52].append ret_list
         when 59
           ### rule_Hrvalue_ultEdeep__u22 queue ###
           chk_len = stack.push [
@@ -2476,14 +2366,11 @@ class @Parser
           node = @proxy2
           node.value_array.clear()
           
+          state_1 = FAstate[b_0][6]
+          if state_1 != STATE_FL
+            if request_make 6, b_0, 0
+              continue
           list_1 = FAcache[b_0][6]
-          if !list_1
-            stack.push [
-              6
-              b_0
-              0
-            ]
-            continue
           
           if chk_len == stack.length
             stack[chk_len-1][0] = 60
@@ -2519,10 +2406,7 @@ class @Parser
             
             
             node.value_array.pop()
-          if FAcache[start_pos][59]?
-            FAcache[start_pos][59].append ret_list
-          else
-            FAcache[start_pos][59] = ret_list
+          FAcache[start_pos][59].append ret_list
     
     FAcache[start_pos][11]
 
