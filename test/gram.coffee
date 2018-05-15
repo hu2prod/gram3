@@ -150,6 +150,19 @@ describe 'gram section', ()->
       
       res_list = prsr.go tok_list
     
+    it "1 token runs", ()->
+      res_list = gs_run 'hello', (gs)->
+        gs.rule 'stmt', 'hello'
+      
+      assert.equal res_list.length, 1
+      assert.equal res_list[0].mx_hash.hash_key, 'stmt'
+      assert.equal res_list[0].value_array.length, 1
+      assert.equal res_list[0].value_view, 'hello'
+      assert.equal res_list[0].value_array[0].mx_hash.hash_key, 'id'
+      assert.equal res_list[0].value_array[0].value, 'hello'
+      
+      return
+    
     it "2 token runs", ()->
       res_list = gs_run 'hello world', (gs)->
         gs.rule 'stmt', 'hello world'

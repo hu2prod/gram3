@@ -41,11 +41,7 @@ strict_parser = require './strict_parser'
     if rule.can_recursive
       if rule._first_token_hash_key
         extra_reset_jl.upush """
-        stack.push [
-          #{scope._extended_hash_key_list.idx rule._first_token_hash_key}
-          start_pos
-          1
-        ]
+        request_make #{scope._extended_hash_key_list.idx rule._first_token_hash_key}, start_pos, 1
         """
       code_queue_recursive_jl.push """
         ### #{rule_fn_name} ###
@@ -62,53 +58,37 @@ strict_parser = require './strict_parser'
   
   code_queue_recursive_jl.append extra_reset_jl
   
-  drop_aux_queue = ""
-  aux_recursive = "FAcache[start_pos][#{group.hash_key_idx}] = node_list"
-  if can_recursive
-    reset_jl = []
-    idx_list = [group.hash_key_idx]
-    for rule in group.list
-      continue if !rule._first_token_hash_key
-      idx_list.upush scope._extended_hash_key_list.idx rule._first_token_hash_key
-    idx_list.remove group.hash_key_idx # себя нельзя
-    for idx in idx_list
-      reset_jl.push """
-        FAdrop[start_pos][#{idx}] = 0
-        """
-    # produces extra variable
-    # FAcache[start_pos][#{group.hash_key_idx}] ?= []
-    drop_aux_queue = """
-    if FAdrop[start_pos][#{group.hash_key_idx}]
-      if !FAcache[start_pos][#{group.hash_key_idx}]?
-        FAcache[start_pos][#{group.hash_key_idx}] = []
-      continue
-    FAdrop[start_pos][#{group.hash_key_idx}] = 1
+  aux_recursive = """
+    FAstate[start_pos][#{group.hash_key_idx}] = STATE_FL
+    FAcache[start_pos][#{group.hash_key_idx}].append node_list
     """
+  if can_recursive
     aux_recursive = """
     for node in node_list
       node._is_new = true
-    if append_list = FAcache[start_pos][#{group.hash_key_idx}]
-      for node in append_list
-        node._is_new = false
-      append_list.uappend node_list
-    else
-      FAcache[start_pos][#{group.hash_key_idx}] = node_list
-    if FAdrop[start_pos][#{group.hash_key_idx}]
+    append_list = FAcache[start_pos][#{group.hash_key_idx}]
+    for node in append_list
+      node._is_new = false
+    append_list.uappend node_list
+    
+    state = FAstate[start_pos][#{group.hash_key_idx}]
+    FAstate[start_pos][#{group.hash_key_idx}] = STATE_FL
+    if state == STATE_IG
       if node_list.last()?._is_new
         # recursive case
-        #{join_list reset_jl, '    '}
+        FAstate[start_pos][#{group.hash_key_idx}] = STATE_RQ
         stack.push [
           #{ext_idx}
           start_pos
           1
         ]
         #{join_list code_queue_recursive_jl, '    '}
+    
     """
   
   """
   when #{group.hash_key_idx}
     ### #{group_name} queue ###
-    #{make_tab drop_aux_queue, '  '}
     #{join_list code_queue_jl, '  '}
   when #{ext_idx}
     ### #{group_name} collect ###
@@ -172,14 +152,11 @@ strict_parser = require './strict_parser'
       "list_#{pp_idx} = #{access_str}"
     else
       """
+      state_#{pp_idx} = FAstate[#{b}][#{access_idx}]
+      if state_#{pp_idx} != STATE_FL
+        if request_make #{access_idx}, #{b}, 0
+          continue
       list_#{pp_idx} = #{access_str}
-      if !list_#{pp_idx}
-        stack.push [
-          #{access_idx}
-          #{b}
-          0
-        ]
-        continue
       """
     # if pp_idx == 1 and scope.can_recursive
     if pp_idx == 1
@@ -400,10 +377,7 @@ strict_parser = require './strict_parser'
     node.value_array.clear()
     node.a = start_pos
     #{make_tab code_collect, '  '}
-    if FAcache[start_pos][#{rule_idx}]?
-      FAcache[start_pos][#{rule_idx}].append ret_list
-    else
-      FAcache[start_pos][#{rule_idx}] = ret_list
+    FAcache[start_pos][#{rule_idx}].append ret_list
   """
 
 @translate = (scope)->
@@ -472,39 +446,44 @@ strict_parser = require './strict_parser'
   hash_key_list = scope._extended_hash_key_list
   """
   require 'fy'
-  drop_stub = []
+  STATE_NA = 0
+  STATE_RQ = 1 # REQ
+  STATE_IG = 2 # REQ_IGNORE
+  STATE_FL = 3 # REQ_FILL
+  state_stub = []
   for i in [0 ... #{scope.hash_key_list.length}]
-    drop_stub.push 0
-  cache_stub = new Array #{hash_key_list.length}
+    state_stub.push STATE_NA
   
   hash_key_list = #{JSON.stringify bak_hash_key_list, null, 2}
   
   class @Parser
     length: 0
     cache : []
-    drop  : []
+    state : []
     Node  : null
     proxy : null
     proxy2: null
     
     go : (token_list_list)->
       @cache= []
-      @drop = []
+      @state= []
       @length = token_list_list.length
       return [] if @length == 0
       @Node = token_list_list[0]?[0]?.constructor
       @proxy= new @Node
       @proxy2= new @Node
       for token_list,idx in token_list_list
-        stub = cache_stub.slice()
+        stub = new Array #{hash_key_list.length}
+        for k in [0 ... #{hash_key_list.length}]
+          stub[k] = []
         for token in token_list
           token.a = idx
           token.b = idx+1
           if -1 != stub_idx = hash_key_list.idx token.mx_hash.hash_key
-            stub[stub_idx] = [token]
-          stub[0] = [token]
+            stub[stub_idx].push token
+          stub[0].push token
         @cache.push stub
-        @drop.push drop_stub.slice()
+        @state.push state_stub.slice()
       
       # one const rule opt
       #{join_list aux_one_const_jl, '    '}
@@ -533,7 +512,7 @@ strict_parser = require './strict_parser'
   
     fsm : ()->
       FAcache = @cache
-      FAdrop = @drop
+      FAstate = @state
       stack = [
         [
           #{hash_key_list.idx scope.expected_token}
@@ -541,7 +520,29 @@ strict_parser = require './strict_parser'
           0
         ]
       ]
+      FAstate[0][#{hash_key_list.idx scope.expected_token}] = STATE_RQ
       length = @length
+      request_make = (token_hki, pos, is_new)->
+        state = FAstate[pos][token_hki]
+        switch state
+          when 0 # STATE_NA
+            if is_new
+              ### !pragma coverage-skip-block ###
+              throw new Error 'invalid call. STATE_NA + is_new'
+            stack.push [token_hki, pos, is_new]
+            FAstate[pos][token_hki] = STATE_RQ
+            return true
+          when 1 # STATE_RQ
+            FAstate[pos][token_hki] = STATE_IG
+            return false
+          when 2 # STATE_IG
+            # stack.push [token_hki, pos, is_new]
+            return false
+          when 3 # STATE_FL
+            FAstate[pos][token_hki] = STATE_RQ
+            stack.push [token_hki, pos, is_new]
+            return true
+        return
       
       while cur = stack.pop()
         [
@@ -550,8 +551,6 @@ strict_parser = require './strict_parser'
           only_new
         ] = cur
         continue if start_pos >= length
-        if !only_new
-          continue if list = FAcache[start_pos][hki]
         
         switch hki
           #{join_list token_jl, '        '}
