@@ -140,6 +140,8 @@ class @Tokenizer
       
       for v in token_hypothesis_max_length_list
         v.mx_hash.tail_space = +@tail_space_len
+        if @text[0] == '\n'
+          v.mx_hash.eol = 1
       
       if @atparse_unique_check
         if token_sequence_hypothesis_list.length > 1
