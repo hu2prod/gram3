@@ -481,7 +481,7 @@ strict_parser = require './strict_parser'
           token.b = idx+1
           if -1 != stub_idx = hash_key_list.idx token.mx_hash.hash_key
             stub[stub_idx].push token
-          stub[0].push token
+          stub[0].upush token
         @cache.push stub
         @state.push state_stub.slice()
       

@@ -11,7 +11,11 @@ util = require 'fy/test_util'
 _iced = require 'iced-coffee-script'
 
 t = new Tokenizer
-t.parser_list.push (new Token_parser 'id', /^[_a-z][_a-z0-9]*/i)
+t.parser_list.push new Token_parser 'id', /^[_a-z][_a-z0-9]*/i, (_this, ret_proxy, v)->
+  if v.value == 'underscore'
+    v.mx_hash.hash_key = '_'
+  ret_proxy.push [v]
+  return
 t.parser_list.push (new Token_parser 'op', /^!/i)
 t.parser_list.push (new Token_parser 'bin_op', /^[+*]/i)
 
@@ -160,6 +164,32 @@ describe 'gram section', ()->
       assert.equal res_list[0].value_view, 'hello'
       assert.equal res_list[0].value_array[0].mx_hash.hash_key, 'id'
       assert.equal res_list[0].value_array[0].value, 'hello'
+      
+      return
+    
+    it "underscore token runs text", ()->
+      res_list = gs_run 'underscore', (gs)->
+        gs.rule 'stmt', 'underscore'
+      
+      assert.equal res_list.length, 1
+      assert.equal res_list[0].mx_hash.hash_key, 'stmt'
+      assert.equal res_list[0].value_array.length, 1
+      assert.equal res_list[0].value_view, 'underscore'
+      assert.equal res_list[0].value_array[0].mx_hash.hash_key, '_'
+      assert.equal res_list[0].value_array[0].value, 'underscore'
+      
+      return
+    
+    it "underscore token runs proxy", ()->
+      res_list = gs_run 'underscore', (gs)->
+        gs.rule 'stmt', '#_'
+      
+      assert.equal res_list.length, 1
+      assert.equal res_list[0].mx_hash.hash_key, 'stmt'
+      assert.equal res_list[0].value_array.length, 1
+      assert.equal res_list[0].value_view, 'underscore'
+      assert.equal res_list[0].value_array[0].mx_hash.hash_key, '_'
+      assert.equal res_list[0].value_array[0].value, 'underscore'
       
       return
     
