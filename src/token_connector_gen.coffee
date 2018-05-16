@@ -32,6 +32,9 @@ STATE_FL = 3 # REQ_FILL
 state_stub = []
 for i in [0 ... 15]
   state_stub.push STATE_NA
+counter_stub = []
+for i in [0 ... 29]
+  counter_stub.push 0
 
 hash_key_list = [
   "_",
@@ -55,6 +58,7 @@ class @Parser
   length: 0
   cache : []
   state : []
+  counter: []
   Node  : null
   proxy : null
   proxy2: null
@@ -62,6 +66,7 @@ class @Parser
   go : (token_list_list)->
     @cache= []
     @state= []
+    @counter= []
     @length = token_list_list.length
     return [] if @length == 0
     @Node = token_list_list[0]?[0]?.constructor
@@ -76,14 +81,16 @@ class @Parser
         token.b = idx+1
         if -1 != stub_idx = hash_key_list.idx token.mx_hash.hash_key
           stub[stub_idx].push token
-        stub[0].push token
+        stub[0].upush token
       @cache.push stub
       @state.push state_stub.slice()
+      @counter.push counter_stub.slice()
     
     # one const rule opt
     
     
-    list = @fsm()
+    @fsm()
+    list = @cache[0][13]
     max_token = token_list_list.length
     
     filter_list = []
@@ -108,6 +115,7 @@ class @Parser
   fsm : ()->
     FAcache = @cache
     FAstate = @state
+    FAcounter = @counter
     stack = [
       [
         13
@@ -138,6 +146,29 @@ class @Parser
           stack.push [token_hki, pos, is_new]
           return true
       return
+    # TODO remove
+    safe_collect = (dst, src)->
+      # TODO hash[candidate.b] optimization
+      # Вместо того, чтобы проходить всегда можно спросить а есть ли такой длинны уже найденый токен
+      # И хранить можно hash или массив b и быстро спрашивать по надобности
+      # В случае хэша, там же можно хранить только токены такой длинны
+      for candidate in src
+        found = false
+        for chk in dst
+          # continue if chk.b != candidate.b
+          c_varr = candidate.value_array
+          continue if chk.value_array.length != c_varr.length
+          match = true
+          for chk_v,idx in chk.value_array
+            if chk_v != c_varr[idx]
+              match = false
+              break
+          if match
+            found = true
+            break
+        if !found
+          dst.push candidate
+      return
     
     while cur = stack.pop()
       [
@@ -160,7 +191,7 @@ class @Parser
           node_list = []
           
           FAstate[start_pos][0] = STATE_FL
-          FAcache[start_pos][0].append node_list
+          FAcache[start_pos][0].uappend node_list
         
         when 1
           ### token_atom queue ###
@@ -221,7 +252,7 @@ class @Parser
           ### rule_Hbra_op_Hstmt_Hbra_cl_ultEbra__u11 ###
           node_list.append FAcache[start_pos][26]
           FAstate[start_pos][1] = STATE_FL
-          FAcache[start_pos][1].append node_list
+          FAcache[start_pos][1].uappend node_list
         
         when 2
           ### token_q_token queue ###
@@ -235,7 +266,7 @@ class @Parser
           node_list = []
           
           FAstate[start_pos][2] = STATE_FL
-          FAcache[start_pos][2].append node_list
+          FAcache[start_pos][2].uappend node_list
         
         when 3
           ### token_dq_token queue ###
@@ -249,7 +280,7 @@ class @Parser
           node_list = []
           
           FAstate[start_pos][3] = STATE_FL
-          FAcache[start_pos][3].append node_list
+          FAcache[start_pos][3].uappend node_list
         
         when 4
           ### token_token queue ###
@@ -263,7 +294,7 @@ class @Parser
           node_list = []
           
           FAstate[start_pos][4] = STATE_FL
-          FAcache[start_pos][4].append node_list
+          FAcache[start_pos][4].uappend node_list
         
         when 5
           ### token_escape_token queue ###
@@ -277,7 +308,7 @@ class @Parser
           node_list = []
           
           FAstate[start_pos][5] = STATE_FL
-          FAcache[start_pos][5].append node_list
+          FAcache[start_pos][5].uappend node_list
         
         when 6
           ### token_hash_id queue ###
@@ -291,7 +322,7 @@ class @Parser
           node_list = []
           
           FAstate[start_pos][6] = STATE_FL
-          FAcache[start_pos][6].append node_list
+          FAcache[start_pos][6].uappend node_list
         
         when 7
           ### token_expr queue ###
@@ -344,7 +375,7 @@ class @Parser
           ### rule_Hatom_Hstar_ultEstar__u10 ###
           node_list.append FAcache[start_pos][42]
           FAstate[start_pos][7] = STATE_FL
-          FAcache[start_pos][7].append node_list
+          FAcache[start_pos][7].uappend node_list
         
         when 8
           ### token_or queue ###
@@ -358,7 +389,7 @@ class @Parser
           node_list = []
           
           FAstate[start_pos][8] = STATE_FL
-          FAcache[start_pos][8].append node_list
+          FAcache[start_pos][8].uappend node_list
         
         when 9
           ### token_option queue ###
@@ -372,7 +403,7 @@ class @Parser
           node_list = []
           
           FAstate[start_pos][9] = STATE_FL
-          FAcache[start_pos][9].append node_list
+          FAcache[start_pos][9].uappend node_list
         
         when 10
           ### token_plus queue ###
@@ -386,7 +417,7 @@ class @Parser
           node_list = []
           
           FAstate[start_pos][10] = STATE_FL
-          FAcache[start_pos][10].append node_list
+          FAcache[start_pos][10].uappend node_list
         
         when 11
           ### token_star queue ###
@@ -400,7 +431,7 @@ class @Parser
           node_list = []
           
           FAstate[start_pos][11] = STATE_FL
-          FAcache[start_pos][11].append node_list
+          FAcache[start_pos][11].uappend node_list
         
         when 12
           ### token_bra_op queue ###
@@ -414,7 +445,7 @@ class @Parser
           node_list = []
           
           FAstate[start_pos][12] = STATE_FL
-          FAcache[start_pos][12].append node_list
+          FAcache[start_pos][12].uappend node_list
         
         when 13
           ### token_stmt queue ###
@@ -443,7 +474,7 @@ class @Parser
           ### rule_Hexpr_Hstmt_ultEjoin__u13 ###
           node_list.append FAcache[start_pos][52]
           FAstate[start_pos][13] = STATE_FL
-          FAcache[start_pos][13].append node_list
+          FAcache[start_pos][13].uappend node_list
         
         when 14
           ### token_bra_cl queue ###
@@ -457,7 +488,7 @@ class @Parser
           node_list = []
           
           FAstate[start_pos][14] = STATE_FL
-          FAcache[start_pos][14].append node_list
+          FAcache[start_pos][14].uappend node_list
         
         when 16
           ### rule_Hq_token_ultEconst__u1 queue ###
@@ -488,9 +519,8 @@ class @Parser
           node.a = start_pos
           
           list_1 = FAcache[b_0][2]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][0] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -509,9 +539,11 @@ class @Parser
             
             ret_list.push node.clone()
             
-            
             node.value_array.pop()
+          FAcounter[b_0][0] = list_1.length
+          
           FAcache[start_pos][16].append ret_list
+          #safe_collect FAcache[start_pos][16], ret_list
         when 18
           ### rule_Hdq_token_ultEconst__u2 queue ###
           chk_len = stack.push [
@@ -541,9 +573,8 @@ class @Parser
           node.a = start_pos
           
           list_1 = FAcache[b_0][3]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][1] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -562,9 +593,11 @@ class @Parser
             
             ret_list.push node.clone()
             
-            
             node.value_array.pop()
+          FAcounter[b_0][1] = list_1.length
+          
           FAcache[start_pos][18].append ret_list
+          #safe_collect FAcache[start_pos][18], ret_list
         when 20
           ### rule_Htoken_ultEconst__u3 queue ###
           chk_len = stack.push [
@@ -594,9 +627,8 @@ class @Parser
           node.a = start_pos
           
           list_1 = FAcache[b_0][4]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][2] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -615,9 +647,11 @@ class @Parser
             
             ret_list.push node.clone()
             
-            
             node.value_array.pop()
+          FAcounter[b_0][2] = list_1.length
+          
           FAcache[start_pos][20].append ret_list
+          #safe_collect FAcache[start_pos][20], ret_list
         when 22
           ### rule_Hescape_token_ultEconst__u4 queue ###
           chk_len = stack.push [
@@ -647,9 +681,8 @@ class @Parser
           node.a = start_pos
           
           list_1 = FAcache[b_0][5]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][3] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -668,9 +701,11 @@ class @Parser
             
             ret_list.push node.clone()
             
-            
             node.value_array.pop()
+          FAcounter[b_0][3] = list_1.length
+          
           FAcache[start_pos][22].append ret_list
+          #safe_collect FAcache[start_pos][22], ret_list
         when 24
           ### rule_Hhash_id_ultEref__u5 queue ###
           chk_len = stack.push [
@@ -700,9 +735,8 @@ class @Parser
           node.a = start_pos
           
           list_1 = FAcache[b_0][6]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][4] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -721,9 +755,11 @@ class @Parser
             
             ret_list.push node.clone()
             
-            
             node.value_array.pop()
+          FAcounter[b_0][4] = list_1.length
+          
           FAcache[start_pos][24].append ret_list
+          #safe_collect FAcache[start_pos][24], ret_list
         when 26
           ### rule_Hbra_op_Hstmt_Hbra_cl_ultEbra__u11 queue ###
           chk_len = stack.push [
@@ -741,9 +777,8 @@ class @Parser
             if request_make 12, b_0, 0
               continue
           list_1 = FAcache[b_0][12]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][6] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -785,9 +820,8 @@ class @Parser
           node.a = start_pos
           
           list_1 = FAcache[b_0][12]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][9] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -824,13 +858,15 @@ class @Parser
                 
                 ret_list.push node.clone()
                 
-                
                 node.value_array.pop()
               
               node.value_array.pop()
             
             node.value_array.pop()
+          FAcounter[b_0][9] = list_1.length
+          
           FAcache[start_pos][26].append ret_list
+          #safe_collect FAcache[start_pos][26], ret_list
         when 34
           ### rule_Hatom_ultEpass__u6 queue ###
           chk_len = stack.push [
@@ -860,9 +896,8 @@ class @Parser
           node.a = start_pos
           
           list_1 = FAcache[b_0][1]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][10] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -881,9 +916,11 @@ class @Parser
             
             ret_list.push node.clone()
             
-            
             node.value_array.pop()
+          FAcounter[b_0][10] = list_1.length
+          
           FAcache[start_pos][34].append ret_list
+          #safe_collect FAcache[start_pos][34], ret_list
         when 36
           ### rule_Hatom_Hor_Hexpr_ultEor__u7 queue ###
           chk_len = stack.push [
@@ -901,9 +938,8 @@ class @Parser
             if request_make 1, b_0, 0
               continue
           list_1 = FAcache[b_0][1]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][12] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -945,9 +981,8 @@ class @Parser
           node.a = start_pos
           
           list_1 = FAcache[b_0][1]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][15] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -984,13 +1019,15 @@ class @Parser
                 
                 ret_list.push node.clone()
                 
-                
                 node.value_array.pop()
               
               node.value_array.pop()
             
             node.value_array.pop()
+          FAcounter[b_0][15] = list_1.length
+          
           FAcache[start_pos][36].append ret_list
+          #safe_collect FAcache[start_pos][36], ret_list
         when 38
           ### rule_Hatom_Hoption_ultEoption__u8 queue ###
           chk_len = stack.push [
@@ -1008,9 +1045,8 @@ class @Parser
             if request_make 1, b_0, 0
               continue
           list_1 = FAcache[b_0][1]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][16] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -1037,9 +1073,8 @@ class @Parser
           node.a = start_pos
           
           list_1 = FAcache[b_0][1]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][18] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -1067,11 +1102,13 @@ class @Parser
               
               ret_list.push node.clone()
               
-              
               node.value_array.pop()
             
             node.value_array.pop()
+          FAcounter[b_0][18] = list_1.length
+          
           FAcache[start_pos][38].append ret_list
+          #safe_collect FAcache[start_pos][38], ret_list
         when 40
           ### rule_Hatom_Hplus_ultEplus__u9 queue ###
           chk_len = stack.push [
@@ -1089,9 +1126,8 @@ class @Parser
             if request_make 1, b_0, 0
               continue
           list_1 = FAcache[b_0][1]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][19] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -1118,9 +1154,8 @@ class @Parser
           node.a = start_pos
           
           list_1 = FAcache[b_0][1]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][21] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -1148,11 +1183,13 @@ class @Parser
               
               ret_list.push node.clone()
               
-              
               node.value_array.pop()
             
             node.value_array.pop()
+          FAcounter[b_0][21] = list_1.length
+          
           FAcache[start_pos][40].append ret_list
+          #safe_collect FAcache[start_pos][40], ret_list
         when 42
           ### rule_Hatom_Hstar_ultEstar__u10 queue ###
           chk_len = stack.push [
@@ -1170,9 +1207,8 @@ class @Parser
             if request_make 1, b_0, 0
               continue
           list_1 = FAcache[b_0][1]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][22] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -1199,9 +1235,8 @@ class @Parser
           node.a = start_pos
           
           list_1 = FAcache[b_0][1]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][24] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -1229,11 +1264,13 @@ class @Parser
               
               ret_list.push node.clone()
               
-              
               node.value_array.pop()
             
             node.value_array.pop()
+          FAcounter[b_0][24] = list_1.length
+          
           FAcache[start_pos][42].append ret_list
+          #safe_collect FAcache[start_pos][42], ret_list
         when 50
           ### rule_Hexpr_ultEpass__u12 queue ###
           chk_len = stack.push [
@@ -1263,9 +1300,8 @@ class @Parser
           node.a = start_pos
           
           list_1 = FAcache[b_0][7]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][25] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -1284,9 +1320,11 @@ class @Parser
             
             ret_list.push node.clone()
             
-            
             node.value_array.pop()
+          FAcounter[b_0][25] = list_1.length
+          
           FAcache[start_pos][50].append ret_list
+          #safe_collect FAcache[start_pos][50], ret_list
         when 52
           ### rule_Hexpr_Hstmt_ultEjoin__u13 queue ###
           chk_len = stack.push [
@@ -1304,9 +1342,8 @@ class @Parser
             if request_make 7, b_0, 0
               continue
           list_1 = FAcache[b_0][7]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][26] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -1333,9 +1370,8 @@ class @Parser
           node.a = start_pos
           
           list_1 = FAcache[b_0][7]
-          for tok in list_1
-            if only_new
-              continue if !tok._is_new
+          for idx_1 in [FAcounter[b_0][28] ... list_1.length] by 1
+            tok = list_1[idx_1]
             
             b_1 = tok.b
             node.value_array.push tok
@@ -1363,13 +1399,15 @@ class @Parser
               
               ret_list.push node.clone()
               
-              
               node.value_array.pop()
             
             node.value_array.pop()
+          FAcounter[b_0][28] = list_1.length
+          
           FAcache[start_pos][52].append ret_list
+          #safe_collect FAcache[start_pos][52], ret_list
     
-    FAcache[start_pos][13]
+    return
 
 # ###################################################################################################
 parser = new module.Parser
