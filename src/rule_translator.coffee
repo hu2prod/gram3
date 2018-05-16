@@ -60,7 +60,7 @@ strict_parser = require './strict_parser'
   
   aux_recursive = """
     FAstate[start_pos][#{group.hash_key_idx}] = STATE_FL
-    FAcache[start_pos][#{group.hash_key_idx}].append node_list
+    FAcache[start_pos][#{group.hash_key_idx}].uappend node_list
     """
   if can_recursive
     aux_recursive = """
@@ -78,11 +78,11 @@ strict_parser = require './strict_parser'
         # recursive case
         FAstate[start_pos][#{group.hash_key_idx}] = STATE_RQ
         stack.push [
-          #{ext_idx}
+          #{group.hash_key_idx}
           start_pos
           1
         ]
-        #{join_list code_queue_recursive_jl, '    '}
+        #{join_list extra_reset_jl, '    '}
     
     """
   
@@ -127,6 +127,7 @@ strict_parser = require './strict_parser'
   value = JSON.stringify(value) if need_escape
   value
 
+@_counter_idx = 0
 @pos_translate = (scope, rule, pos, pp_idx, code, is_collect)->
   b = "b_#{pp_idx - 1}"
   b_n = "b_#{pp_idx}"
@@ -135,7 +136,7 @@ strict_parser = require './strict_parser'
   # DO NOT change push/pop bacause you can't always estimate position (variable length with quantificators)
   aux_skip = ""
   if pp_idx != 1
-    aux_skip = "continue if #{b} >= length"
+    # aux_skip = "continue if #{b} >= length"
     aux_skip = """
       if #{b} >= length
         node.value_array.pop()
@@ -158,13 +159,13 @@ strict_parser = require './strict_parser'
           continue
       list_#{pp_idx} = #{access_str}
       """
-    # if pp_idx == 1 and scope.can_recursive
-    if pp_idx == 1
-      aux_const_check = """
-        if only_new
-          continue if !tok._is_new
-        #{aux_const_check}
-        """
+    
+    # if pp_idx == 1
+    #   aux_const_check = """
+    #     if only_new
+    #       continue if !tok._is_new
+    #     #{aux_const_check}
+    #     """
     aux_loop = ""
     if prev_code
       # for tok in list_#{pp_idx} produces 2 extra variables
@@ -176,16 +177,36 @@ strict_parser = require './strict_parser'
       while idx_#{pp_idx} < len_#{pp_idx}
         tok = list_#{pp_idx}[idx_#{pp_idx}++]
       ###
-      aux_loop = """
-      for tok in list_#{pp_idx}
-        #{make_tab aux_const_check, '  '}
-        #{b_n} = tok.b
-        node.value_array.push tok
-        
-        #{make_tab prev_code, '  '}
-        
-        node.value_array.pop()
-      """
+      counter_idx = module._counter_idx++
+      if pp_idx == 1
+        aux_loop = """
+        for idx_#{pp_idx} in [FAcounter[#{b}][#{counter_idx}] ... list_#{pp_idx}.length] by 1
+          tok = list_#{pp_idx}[idx_#{pp_idx}]
+          #{make_tab aux_const_check, '  '}
+          #{b_n} = tok.b
+          node.value_array.push tok
+          
+          #{make_tab prev_code, '  '}
+          
+          node.value_array.pop()
+        """
+        if is_collect
+          aux_loop += """
+            
+            FAcounter[#{b}][#{counter_idx}] = list_#{pp_idx}.length
+            """
+      else
+        aux_loop = """
+        for tok in list_#{pp_idx}
+          #{make_tab aux_const_check, '  '}
+          #{b_n} = tok.b
+          node.value_array.push tok
+          
+          #{make_tab prev_code, '  '}
+          
+          node.value_array.pop()
+        """
+    
     """
     #{aux_skip}
     #{iterator}
@@ -344,7 +365,6 @@ strict_parser = require './strict_parser'
   node.b = node.value_array.last().b
   
   ret_list.push node.clone()
-  
   """
   while pp_idx = parse_position_list.length
     pos = parse_position_list.pop()
@@ -377,10 +397,13 @@ strict_parser = require './strict_parser'
     node.value_array.clear()
     node.a = start_pos
     #{make_tab code_collect, '  '}
-    safe_collect FAcache[start_pos][#{rule_idx}], ret_list
+    
+    FAcache[start_pos][#{rule_idx}].append ret_list
+    #safe_collect FAcache[start_pos][#{rule_idx}], ret_list
   """
 
 @translate = (scope)->
+  module._counter_idx = 0
   rule_jl = []
   token_jl = []
   bak_hash_key_list = scope.hash_key_list.clone()
@@ -453,6 +476,9 @@ strict_parser = require './strict_parser'
   state_stub = []
   for i in [0 ... #{scope.hash_key_list.length}]
     state_stub.push STATE_NA
+  counter_stub = []
+  for i in [0 ... #{module._counter_idx}]
+    counter_stub.push 0
   
   hash_key_list = #{JSON.stringify bak_hash_key_list, null, 2}
   
@@ -460,6 +486,7 @@ strict_parser = require './strict_parser'
     length: 0
     cache : []
     state : []
+    counter: []
     Node  : null
     proxy : null
     proxy2: null
@@ -467,6 +494,7 @@ strict_parser = require './strict_parser'
     go : (token_list_list)->
       @cache= []
       @state= []
+      @counter= []
       @length = token_list_list.length
       return [] if @length == 0
       @Node = token_list_list[0]?[0]?.constructor
@@ -484,11 +512,13 @@ strict_parser = require './strict_parser'
           stub[0].upush token
         @cache.push stub
         @state.push state_stub.slice()
+        @counter.push counter_stub.slice()
       
       # one const rule opt
       #{join_list aux_one_const_jl, '    '}
       
-      list = @fsm()
+      @fsm()
+      list = @cache[0][#{hash_key_list.idx scope.expected_token}]
       max_token = token_list_list.length
       
       filter_list = []
@@ -513,6 +543,7 @@ strict_parser = require './strict_parser'
     fsm : ()->
       FAcache = @cache
       FAstate = @state
+      FAcounter = @counter
       stack = [
         [
           #{hash_key_list.idx scope.expected_token}
@@ -543,10 +574,16 @@ strict_parser = require './strict_parser'
             stack.push [token_hki, pos, is_new]
             return true
         return
+      # TODO remove
       safe_collect = (dst, src)->
+        # TODO hash[candidate.b] optimization
+        # Вместо того, чтобы проходить всегда можно спросить а есть ли такой длинны уже найденый токен
+        # И хранить можно hash или массив b и быстро спрашивать по надобности
+        # В случае хэша, там же можно хранить только токены такой длинны
         for candidate in src
           found = false
           for chk in dst
+            # continue if chk.b != candidate.b
             c_varr = candidate.value_array
             continue if chk.value_array.length != c_varr.length
             match = true
@@ -573,5 +610,5 @@ strict_parser = require './strict_parser'
           #{join_list token_jl, '        '}
           #{join_list rule_jl, '        '}
       
-      FAcache[start_pos][#{hash_key_list.idx scope.expected_token}]
+      return
   """
