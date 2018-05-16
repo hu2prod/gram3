@@ -377,7 +377,7 @@ strict_parser = require './strict_parser'
     node.value_array.clear()
     node.a = start_pos
     #{make_tab code_collect, '  '}
-    FAcache[start_pos][#{rule_idx}].append ret_list
+    safe_collect FAcache[start_pos][#{rule_idx}], ret_list
   """
 
 @translate = (scope)->
@@ -542,6 +542,23 @@ strict_parser = require './strict_parser'
             FAstate[pos][token_hki] = STATE_RQ
             stack.push [token_hki, pos, is_new]
             return true
+        return
+      safe_collect = (dst, src)->
+        for candidate in src
+          found = false
+          for chk in dst
+            c_varr = candidate.value_array
+            continue if chk.value_array.length != c_varr.length
+            match = true
+            for chk_v,idx in chk.value_array
+              if chk_v != c_varr[idx]
+                match = false
+                break
+            if match
+              found = true
+              break
+          if !found
+            dst.push candidate
         return
       
       while cur = stack.pop()
