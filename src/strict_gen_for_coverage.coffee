@@ -518,17 +518,20 @@ class @Parser
           node_list.append FAcache[start_pos][50]
           ### rule_Haccess_rvalue_XX_Hid_priorityEX9000_ultEfield_access__u21 ###
           node_list.append FAcache[start_pos][52]
-          for node in node_list
-            node._is_new = true
           append_list = FAcache[start_pos][6]
-          for node in append_list
-            node._is_new = false
-          append_list.uappend node_list
+          has_new = false
+          for node in node_list
+            if append_list.has node
+              node._is_new = false
+            else
+              node._is_new = true
+              append_list.push node
+              has_new = true
           
           state = FAstate[start_pos][6]
           FAstate[start_pos][6] = STATE_FL
           if state == STATE_IG
-            if node_list.last()?._is_new
+            if has_new
               # recursive case
               FAstate[start_pos][6] = STATE_RQ
               stack.push [
