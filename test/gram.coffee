@@ -478,6 +478,22 @@ describe 'gram section', ()->
         
         assert.equal res_list.length, 1
         assert.equal res_list[0].mx_hash.hash_key, 'stmt'
+        assert.equal res_list[0].value_array[2].mx_hash.hash_key, 'stmt'
+        assert.equal res_list[0].value_array[2].value_array.length, 1
+        assert.equal res_list[0].value_array[2].value_array[0].mx_hash.hash_key, 'id'
+        
+        return
+      it "a+b+c priority inverse assoc", ()->
+        res_list = gs_run 'a+b+c', (gs)->
+          gs.rule('stmt', '#id')              .mx("priority=-9000")
+          gs.rule('_bin_op', '\\+')           .mx('priority=6')
+          gs.rule('stmt', '#stmt #_bin_op #stmt').mx("priority=#_bin_op.priority") .strict('#stmt[1].priority<#_bin_op.priority #stmt[2].priority<=#_bin_op.priority')
+        
+        assert.equal res_list.length, 1
+        assert.equal res_list[0].mx_hash.hash_key, 'stmt'
+        assert.equal res_list[0].value_array[0].mx_hash.hash_key, 'stmt'
+        assert.equal res_list[0].value_array[0].value_array.length, 1
+        assert.equal res_list[0].value_array[0].value_array[0].mx_hash.hash_key, 'id'
         
         return
       hash = {
