@@ -11,6 +11,7 @@ class @Node
   a             : 0
   b             : 0
   _is_new       : false # private for parsing stage
+  depth         : 0
   
   constructor   : (value = '', mx_hash = {})->
     @mx_hash    = mx_hash

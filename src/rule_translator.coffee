@@ -535,10 +535,15 @@ strict_parser = require './strict_parser'
     node_fix : (node)->
       walk = (node)->
         vv_list = []
+        max_depth = -1
         for v in node.value_array
           walk v
-          vv_list.push v.value_view or v.value
-        node.value_view = vv_list.join ' '
+          max_depth = Math.max max_depth, v.depth
+        node.depth = max_depth + 1
+        if node.depth < 10 # HARDCODE !!!
+          for v in node.value_array
+            vv_list.push v.value_view or v.value
+          node.value_view = vv_list.join ' '
         return
       walk node
       return
